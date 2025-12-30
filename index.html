@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GoNime</title>
+    <link rel="stylesheet" href="style.css" />
+    <link
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
+      rel="stylesheet"
+    />
+  </head>
+  <body>
+    <nav class="navbar">
+      <div class="logo" onclick="fetchAnime(1)" style="cursor: pointer">
+        Go<span>Nime</span>
+      </div>
+
+      <div class="nav-links desktop-only">
+        <button onclick="showFavorites()" class="nav-btn">
+          <i class="fas fa-heart"></i> Favorit
+        </button>
+        <button onclick="openGenreModal()" class="nav-btn">
+          <i class="fas fa-tags"></i> Genre
+        </button>
+        <button onclick="openScheduleModal()" class="nav-btn">
+          <i class="fas fa-calendar-alt"></i> Jadwal
+        </button>
+      </div>
+
+      <div class="search-box desktop-search">
+        <input type="text" id="search-input" placeholder="Cari anime..." />
+        <button onclick="searchAnime()"><i class="fas fa-search"></i></button>
+      </div>
+
+      <div class="mobile-icons">
+        <button onclick="toggleMobileSearch()" class="nav-btn-mobile">
+          <i class="fas fa-search"></i>
+        </button>
+      </div>
+    </nav>
+
+    <div id="mobile-search-panel" class="mobile-search-panel">
+      <input
+        type="text"
+        id="search-input-mobile"
+        placeholder="Cari judul anime..."
+        onkeypress="handleMobileEnter(event)"
+      />
+      <button onclick="searchAnimeMobile()">
+        <i class="fas fa-search"></i>
+      </button>
+    </div>
+
+    <div class="mobile-bottom-nav">
+      <div onclick="fetchAnime(1)"><i class="fas fa-home"></i>Home</div>
+      <div onclick="showFavorites()"><i class="fas fa-heart"></i>Favorit</div>
+      <div onclick="openScheduleModal()">
+        <i class="fas fa-calendar-alt"></i>Jadwal
+      </div>
+      <div onclick="openGenreModal()"><i class="fas fa-tags"></i>Genre</div>
+    </div>
+
+    <main class="container">
+      <h2>Daftar Anime Terbaru</h2>
+
+      <div id="loading" class="loading">Memuat data...</div>
+
+      <div id="anime-grid" class="anime-grid"></div>
+
+      <div class="pagination-container">
+        <button id="btn-prev" onclick="changePage(-1)">Previous</button>
+        <span id="page-info">Halaman 1</span>
+        <button id="btn-next" onclick="changePage(1)">Next</button>
+      </div>
+    </main>
+
+    <div id="detail-modal" class="modal">
+      <div class="modal-content detail-content">
+        <span class="close-btn" onclick="closeDetail()">&times;</span>
+
+        <div class="detail-layout">
+          <div class="detail-left">
+            <img id="detail-image" src="" alt="Poster" />
+          </div>
+
+          <div class="detail-right">
+            <h2 id="detail-title">Judul Anime</h2>
+            <button id="btn-favorite" class="fav-btn">
+              <i class="far fa-heart"></i>
+            </button>
+            <div id="season-container" class="season-box" style="display: none">
+              <label for="season-dropdown"
+                ><i class="fas fa-layer-group"></i> Season / Related:</label
+              >
+              <select id="season-dropdown" class="season-select">
+                <option value="">Mencari season terkait...</option>
+              </select>
+            </div>
+            <div class="meta-info" id="detail-meta">Loading info...</div>
+            <p class="synopsis" id="detail-synopsis">Memuat sinopsis...</p>
+
+            <h3>Daftar Episode</h3>
+            <div id="episode-list" class="episode-grid"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="genre-modal" class="modal">
+      <div class="modal-content genre-content">
+        <span class="close-btn" onclick="closeGenreModal()">&times;</span>
+        <h3>Pilih Genre Anime</h3>
+        <div id="genre-list" class="genre-grid">Loading genre...</div>
+      </div>
+    </div>
+
+    <div id="schedule-modal" class="modal">
+      <div class="modal-content schedule-content">
+        <span class="close-btn" onclick="closeScheduleModal()">&times;</span>
+        <h3>📅 Jadwal Rilis Anime</h3>
+
+        <div class="day-tabs" id="day-tabs"></div>
+
+        <div id="schedule-list" class="schedule-grid">
+          <p style="text-align: center; margin-top: 20px">
+            Pilih hari untuk melihat jadwal.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <div id="video-modal" class="modal">
+      <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <h3 id="modal-title">Judul Anime</h3>
+
+        <div class="video-wrapper"></div>
+      </div>
+    </div>
+
+    <script src="script.js"></script>
+  </body>
+</html>

@@ -1,0 +1,719 @@
+:root {
+  --primary: #ff4757;
+  --dark: #1e272e;
+  --darker: #13181c;
+  --text: #ffffff;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: "Segoe UI", sans-serif;
+}
+
+body {
+  background-color: var(--darker);
+  color: var(--text);
+}
+
+/* Navbar */
+.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 15px 5%;
+  background-color: var(--dark);
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.5);
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+.logo {
+  font-size: 1.5rem;
+  font-weight: bold;
+  color: var(--text);
+}
+.logo span {
+  color: var(--primary);
+}
+
+.search-box {
+  display: flex;
+  gap: 5px;
+}
+.search-box input {
+  padding: 8px;
+  border-radius: 4px;
+  border: none;
+  outline: none;
+}
+.search-box button {
+  padding: 8px 15px;
+  background: var(--primary);
+  border: none;
+  color: white;
+  border-radius: 4px;
+  cursor: pointer;
+}
+
+/* Grid Layout */
+.container {
+  padding: 20px 5%;
+}
+h2 {
+  margin-bottom: 20px;
+  border-left: 5px solid var(--primary);
+  padding-left: 10px;
+}
+
+.anime-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 20px;
+}
+
+/* Kartu Anime */
+.anime-card {
+  background: var(--dark);
+  border-radius: 8px;
+  overflow: hidden;
+  transition: transform 0.3s;
+  cursor: pointer;
+  position: relative;
+}
+.anime-card:hover {
+  transform: translateY(-5px);
+}
+.anime-card img {
+  width: 100%;
+  height: 280px;
+  object-fit: cover;
+}
+.card-info {
+  padding: 10px;
+}
+.card-title {
+  font-size: 1rem;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Loading */
+.loading {
+  text-align: center;
+  margin-top: 50px;
+  font-style: italic;
+  color: #888;
+}
+
+/* Modal Video */
+.modal {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 1000;
+  align-items: center;
+  justify-content: center;
+}
+.modal-content {
+  background: var(--dark);
+  padding: 20px;
+  width: 90%;
+  max-width: 800px;
+  border-radius: 8px;
+  position: relative;
+}
+.close-btn {
+  position: absolute;
+  top: 10px;
+  right: 20px;
+  font-size: 30px;
+  cursor: pointer;
+  color: white;
+}
+.video-wrapper {
+  margin-top: 15px;
+}
+.video-wrapper iframe {
+  width: 100%;
+  height: 450px;
+  border: none;
+  border-radius: 8px;
+}
+
+.pagination-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 30px;
+  gap: 20px;
+}
+
+.pagination-container button {
+  padding: 10px 20px;
+  background-color: var(--primary);
+  color: white;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.pagination-container button:hover {
+  background-color: #ff6b81;
+}
+
+.pagination-container button:disabled {
+  background-color: #555;
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+#page-info {
+  font-size: 1.1rem;
+  font-weight: bold;
+}
+
+.detail-content {
+  width: 95%;
+  max-width: 900px;
+  max-height: 90vh; /* Biar bisa discroll kalau kepanjangan */
+  overflow-y: auto;
+  background: #1e272e;
+  color: white;
+}
+
+.detail-layout {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap; /* Biar aman di HP */
+  margin-top: 10px;
+}
+
+.detail-left {
+  flex: 1;
+  min-width: 200px;
+}
+
+.detail-left img {
+  width: 100%;
+  border-radius: 8px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+}
+
+.detail-right {
+  flex: 2;
+  min-width: 300px;
+}
+
+.detail-right h2 {
+  color: #ff4757;
+  margin-bottom: 10px;
+}
+
+.meta-info {
+  font-size: 0.9rem;
+  color: #ccc;
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+.synopsis {
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 20px;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  max-height: 150px;
+  overflow-y: auto;
+}
+
+/* Grid Episode List */
+.episode-grid {
+  display: flex;
+  flex-direction: column; /* Susun ke bawah */
+  gap: 10px; /* Jarak antar episode */
+  max-height: 400px; /* Batas tinggi list */
+  overflow-y: auto; /* Muncul scrollbar jika kepanjangan */
+  padding-right: 10px; /* Jarak biar scrollbar gak nempel */
+  margin-top: 15px;
+  background: rgba(0, 0, 0, 0.2); /* Latar belakang agak gelap */
+  padding: 10px;
+  border-radius: 8px;
+}
+
+/* Tombol Episode (Gaya List Item) */
+.episode-btn {
+  display: flex;
+  justify-content: space-between; /* Judul di kiri, ikon di kanan */
+  align-items: center;
+  width: 100%;
+  background: #2f3542;
+  border: 1px solid #454d5e;
+  color: #dfe4ea;
+  padding: 12px 15px;
+  border-radius: 6px;
+  cursor: pointer;
+  text-align: left;
+  font-size: 0.95rem;
+  transition: all 0.2s ease;
+}
+
+/* Efek Hover */
+.episode-btn:hover {
+  background: #3e4452;
+  border-left: 4px solid var(--primary); /* Aksen warna di kiri saat hover */
+  padding-left: 11px; /* Kompensasi border */
+  color: white;
+}
+
+/* Style Scrollbar khusus daftar episode (Biar keren) */
+.episode-grid::-webkit-scrollbar {
+  width: 8px;
+}
+.episode-grid::-webkit-scrollbar-track {
+  background: #1e272e;
+}
+.episode-grid::-webkit-scrollbar-thumb {
+  background: #57606f;
+  border-radius: 4px;
+}
+.episode-grid::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+.episode-btn.watched {
+  background-color: #202020; /* Warna lebih gelap */
+  color: #888; /* Teks jadi abu-abu */
+  border-color: #333;
+}
+
+.episode-btn.watched i {
+  color: #27ae60 !important; /* Ikon Play berubah jadi Hijau */
+}
+
+/* Tambahan: Ikon Mata untuk penanda */
+.watched-icon {
+  margin-right: 8px;
+  font-size: 0.8rem;
+}
+
+.nav-links {
+  margin-right: auto;
+  margin-left: 20px;
+}
+
+.nav-btn {
+  background: transparent;
+  border: 1px solid var(--primary);
+  color: var(--primary);
+  padding: 8px 15px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: 0.3s;
+}
+
+.nav-btn:hover {
+  background: var(--primary);
+  color: white;
+}
+
+/* Tombol Love di Modal Detail */
+.title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+}
+
+.fav-btn {
+  background: transparent;
+  border: none;
+  font-size: 2rem;
+  color: #ccc;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.fav-btn:hover {
+  transform: scale(1.1);
+}
+
+/* Kalau aktif (Disukai) */
+.fav-btn.active {
+  color: #ff4757; /* Merah */
+}
+
+.genre-content {
+  max-width: 600px;
+  text-align: center;
+}
+
+.genre-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 20px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.genre-tag {
+  background: #2f3542;
+  color: #dfe4ea;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  cursor: pointer;
+  border: 1px solid #57606f;
+  transition: 0.3s;
+}
+
+.genre-tag:hover {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: white;
+  transform: translateY(-2px);
+}
+
+.empty-state {
+  grid-column: 1 / -1; /* PENTING: Biar elemen ini melebar memenuhi seluruh grid */
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  background: rgba(255, 255, 255, 0.03); /* Background transparan halus */
+  border: 2px dashed #444; /* Garis putus-putus estetik */
+  border-radius: 15px;
+  text-align: center;
+  margin-top: 20px;
+}
+
+.empty-icon {
+  font-size: 5rem; /* Ikon besar */
+  color: #444;
+  margin-bottom: 20px;
+  animation: float 3s ease-in-out infinite; /* Animasi melayang dikit */
+}
+
+.empty-state h3 {
+  font-size: 1.5rem;
+  color: var(--text);
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  color: #aaa;
+  margin-bottom: 30px;
+  font-size: 1rem;
+}
+
+/* Tombol Keren (Primary Button) */
+.btn-primary {
+  background: var(--primary);
+  color: white;
+  border: none;
+  padding: 12px 30px;
+  border-radius: 30px; /* Tombol bulat lonjong */
+  font-weight: bold;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.btn-primary:hover {
+  background: #ff6b81;
+  transform: translateY(-3px); /* Efek naik pas di-hover */
+  box-shadow: 0 8px 20px rgba(255, 71, 87, 0.5);
+}
+
+/* Animasi Melayang */
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+.schedule-content {
+  max-width: 800px;
+  min-height: 500px;
+}
+
+/* Tab Navigasi Hari */
+.day-tabs {
+  display: flex;
+  gap: 10px;
+  overflow-x: auto; /* Biar bisa discroll di HP */
+  padding-bottom: 10px;
+  border-bottom: 2px solid #333;
+  margin-bottom: 20px;
+}
+
+.day-tab {
+  background: transparent;
+  color: #aaa;
+  border: none;
+  padding: 10px 20px;
+  cursor: pointer;
+  font-weight: bold;
+  white-space: nowrap;
+  border-radius: 5px 5px 0 0;
+  transition: 0.3s;
+}
+
+.day-tab:hover {
+  color: white;
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Tab Aktif */
+.day-tab.active {
+  color: var(--primary);
+  border-bottom: 3px solid var(--primary);
+  background: rgba(255, 71, 87, 0.1);
+}
+
+/* Grid Anime Jadwal */
+.schedule-grid {
+  display: grid;
+  grid-template-columns: repeat(
+    auto-fill,
+    minmax(250px, 1fr)
+  ); /* List melebar */
+  gap: 15px;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+.schedule-item {
+  display: flex; /* Susun ke samping (Gambar - Teks) */
+  align-items: center;
+  background: #2f3542;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  border: 1px solid transparent;
+  transition: 0.2s;
+  gap: 15px; /* Jarak antara gambar dan teks */
+  overflow: hidden;
+}
+
+.schedule-item:hover {
+  background: #3e4452;
+  border-color: var(--primary);
+  transform: translateX(5px); /* Efek geser dikit pas hover */
+}
+
+/* Gambar Kecil di Jadwal */
+.schedule-img {
+  width: 50px;
+  height: 70px;
+  object-fit: cover;
+  border-radius: 4px;
+  flex-shrink: 0; /* Biar gambar gak gepeng */
+  background-color: #444; /* Warna placeholder kalau loading */
+}
+
+/* Judul Jadwal */
+.schedule-title {
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #fff;
+  line-height: 1.4;
+}
+
+.season-box {
+  margin-bottom: 15px;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 10px;
+  border-radius: 6px;
+  border-left: 3px solid var(--primary);
+}
+
+.season-box label {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin-right: 10px;
+  font-weight: bold;
+}
+
+.season-select {
+  background: #2f3542;
+  color: white;
+  border: 1px solid #57606f;
+  padding: 8px;
+  border-radius: 4px;
+  outline: none;
+  font-size: 0.9rem;
+  max-width: 100%;
+  cursor: pointer;
+}
+
+.season-select:hover {
+  border-color: var(--primary);
+}
+
+.season-select option {
+  background: #1e272e;
+  color: white;
+  padding: 10px;
+}
+
+.desktop-only {
+  display: flex;
+  gap: 10px;
+}
+.desktop-search {
+  display: flex;
+}
+.mobile-icons {
+  display: none;
+}
+.mobile-search-panel {
+  display: none;
+}
+.mobile-bottom-nav {
+  display: none;
+}
+
+/* Tombol Mobile di Navbar */
+.nav-btn-mobile {
+  background: transparent;
+  border: none;
+  color: white;
+  font-size: 1.2rem;
+  padding: 10px;
+  cursor: pointer;
+}
+
+/* Panel Pencarian Mobile (Muncul di bawah navbar) */
+.mobile-search-panel {
+  display: none; /* Default hidden */
+  background: var(--dark);
+  padding: 15px;
+  position: fixed; /* Nempel di atas */
+  top: 60px; /* Sesuaikan tinggi navbar */
+  left: 0;
+  width: 100%;
+  z-index: 99;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
+  /* Flex biar rapi */
+  align-items: center;
+  gap: 10px;
+  animation: slideDown 0.3s ease;
+}
+
+.mobile-search-panel.active {
+  display: flex; /* Muncul saat class active ditambahkan JS */
+}
+
+.mobile-search-panel input {
+  flex: 1;
+  padding: 10px;
+  border-radius: 4px;
+  border: none;
+  outline: none;
+}
+
+.mobile-search-panel button {
+  padding: 10px 15px;
+  background: var(--primary);
+  border: none;
+  color: white;
+  border-radius: 4px;
+}
+
+@keyframes slideDown {
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* --- TAMPILAN KHUSUS HP (Max 600px) --- */
+@media (max-width: 600px) {
+  /* Sembunyikan elemen Desktop */
+  .desktop-only {
+    display: none;
+  }
+  .desktop-search {
+    display: none;
+  }
+
+  /* Munculkan elemen Mobile */
+  .mobile-icons {
+    display: block;
+  }
+
+  /* Navigasi Bawah ala Aplikasi (Bottom Bar) */
+  .mobile-bottom-nav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    background: var(--dark);
+    justify-content: space-around;
+    padding: 10px 0;
+    border-top: 1px solid #333;
+    z-index: 1000;
+  }
+
+  .mobile-bottom-nav div {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 0.7rem;
+    color: #aaa;
+    cursor: pointer;
+  }
+
+  .mobile-bottom-nav div i {
+    font-size: 1.2rem;
+    margin-bottom: 4px;
+    color: var(--primary);
+  }
+
+  /* Tambah padding bawah body biar konten gak ketutup bottom nav */
+  body {
+    padding-bottom: 60px;
+  }
+}
+
+/* Responsif Navbar (Opsional biar rapi di HP) */
+@media (max-width: 600px) {
+  .nav-links {
+    display: none; /* Sembunyikan tombol fav text di HP kalau sempit, atau sesuaikan */
+  }
+}
+
+@media (max-width: 600px) {
+  .video-wrapper iframe {
+    height: 250px;
+  }
+}
