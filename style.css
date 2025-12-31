@@ -29,11 +29,13 @@ body {
   top: 0;
   z-index: 100;
 }
+
 .logo {
   font-size: 1.5rem;
   font-weight: bold;
   color: var(--text);
 }
+
 .logo span {
   color: var(--primary);
 }
@@ -42,12 +44,14 @@ body {
   display: flex;
   gap: 5px;
 }
+
 .search-box input {
   padding: 8px;
   border-radius: 4px;
   border: none;
   outline: none;
 }
+
 .search-box button {
   padding: 8px 15px;
   background: var(--primary);
@@ -61,6 +65,7 @@ body {
 .container {
   padding: 20px 5%;
 }
+
 h2 {
   margin-bottom: 20px;
   border-left: 5px solid var(--primary);
@@ -82,17 +87,21 @@ h2 {
   cursor: pointer;
   position: relative;
 }
+
 .anime-card:hover {
   transform: translateY(-5px);
 }
+
 .anime-card img {
   width: 100%;
   height: 280px;
   object-fit: cover;
 }
+
 .card-info {
   padding: 10px;
 }
+
 .card-title {
   font-size: 1rem;
   font-weight: 600;
@@ -117,30 +126,68 @@ h2 {
   left: 0;
   width: 100%;
   height: 100%;
-  background: rgba(0, 0, 0, 0.9);
+  background: rgba(0, 0, 0, 0.95);
   z-index: 1000;
   align-items: center;
   justify-content: center;
+  backdrop-filter: blur(5px);
 }
+
 .modal-content {
-  background: var(--dark);
-  padding: 20px;
-  width: 90%;
-  max-width: 800px;
-  border-radius: 8px;
+  background: linear-gradient(145deg, #1e272e 0%, #16202b 100%);
+  padding: 0;
+  width: 95%;
+  max-width: 1200px;
+  max-height: 90vh;
+  overflow-y: auto;
+  border-radius: 16px;
   position: relative;
+  box-shadow: 0 25px 80px rgba(0, 0, 0, 0.9);
+  scrollbar-width: thin;
+  scrollbar-color: var(--primary) #2f3542;
+  border: 1px solid rgba(255, 71, 87, 0.1);
 }
+
+.modal-content::-webkit-scrollbar {
+  width: 8px;
+}
+
+.modal-content::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary), #d63447);
+  border-radius: 10px;
+}
+
+.modal-content::-webkit-scrollbar-track {
+  background: #1e272e;
+}
+
 .close-btn {
   position: absolute;
-  top: 10px;
-  right: 20px;
-  font-size: 30px;
+  top: 15px;
+  right: 25px;
+  font-size: 32px;
   cursor: pointer;
   color: white;
+  z-index: 10;
+  background: rgba(0, 0, 0, 0.5);
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s;
 }
+
+.close-btn:hover {
+  background: var(--primary);
+  transform: rotate(90deg);
+}
+
 .video-wrapper {
   margin-top: 15px;
 }
+
 .video-wrapper iframe {
   width: 100%;
   height: 450px;
@@ -185,45 +232,174 @@ h2 {
 .detail-content {
   width: 95%;
   max-width: 900px;
-  max-height: 90vh; /* Biar bisa discroll kalau kepanjangan */
+  max-height: 90vh;
   overflow-y: auto;
   background: #1e272e;
   color: white;
 }
 
+/* ===== LAYOUT MODAL DETAIL (DIPERBAIKI) ===== */
 .detail-layout {
   display: flex;
-  gap: 20px;
-  flex-wrap: wrap; /* Biar aman di HP */
-  margin-top: 10px;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  gap: 30px;
+  padding: 35px;
+  align-items: flex-start;
+  background: linear-gradient(
+    135deg,
+    rgba(22, 32, 43, 0.98) 0%,
+    rgba(30, 39, 46, 0.95) 100%
+  );
+  position: relative;
 }
 
-.detail-left {
-  flex: 1;
-  min-width: 200px;
-}
-
-.detail-left img {
+/* Overlay dekoratif */
+.detail-layout::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
   width: 100%;
-  border-radius: 8px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.5);
+  height: 200px;
+  background: linear-gradient(
+    180deg,
+    rgba(255, 71, 87, 0.1) 0%,
+    transparent 100%
+  );
+  pointer-events: none;
 }
 
+/* ===== SIDEBAR KIRI (Cover + Synopsis) ===== */
+.detail-sidebar {
+  width: 35%;
+  min-width: 280px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: sticky;
+  top: 20px;
+  z-index: 1;
+}
+
+#detail-image {
+  width: 100%;
+  border-radius: 16px;
+  box-shadow: 0 15px 50px rgba(0, 0, 0, 0.8), 0 0 0 1px rgba(255, 255, 255, 0.1);
+  aspect-ratio: 2/3;
+  object-fit: cover;
+  transition: transform 0.4s ease, box-shadow 0.4s ease;
+}
+
+#detail-image:hover {
+  transform: scale(1.03) translateY(-5px);
+  box-shadow: 0 20px 60px rgba(255, 71, 87, 0.3),
+    0 0 0 1px rgba(255, 71, 87, 0.5);
+}
+
+/* Synopsis Box - Modern & Clean */
+.synopsis-area {
+  background: rgba(255, 255, 255, 0.07);
+  padding: 20px;
+  border-radius: 14px;
+  font-size: 0.92rem;
+  line-height: 1.8;
+  color: #e8e8e8;
+  border-left: 5px solid var(--primary);
+  backdrop-filter: blur(15px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+  transition: all 0.3s ease;
+  max-height: 250px;
+  overflow-y: auto;
+}
+
+.synopsis-area:hover {
+  background: rgba(255, 255, 255, 0.1);
+  border-left-width: 6px;
+}
+
+/* Scrollbar untuk Synopsis */
+.synopsis-area::-webkit-scrollbar {
+  width: 6px;
+}
+
+.synopsis-area::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.synopsis-area::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary), #d63447);
+  border-radius: 10px;
+}
+
+.synopsis-area::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
+}
+
+.synopsis-area h4 {
+  color: var(--primary);
+  margin-bottom: 15px;
+  font-size: 1.15rem;
+  border-bottom: 2px solid rgba(255, 71, 87, 0.25);
+  padding-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+}
+
+.synopsis-area h4::before {
+  content: "📖";
+  font-size: 1.3rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
+}
+
+/* ===== KONTEN KANAN (Info + Episodes) ===== */
 .detail-right {
   flex: 2;
   min-width: 300px;
+  max-height: 80vh;
+  overflow-y: auto;
+  padding-right: 10px;
+}
+
+/* Scrollbar untuk Detail Right */
+.detail-right::-webkit-scrollbar {
+  width: 8px;
+}
+
+.detail-right::-webkit-scrollbar-track {
+  background: rgba(0, 0, 0, 0.2);
+  border-radius: 10px;
+}
+
+.detail-right::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, var(--primary), #d63447);
+  border-radius: 10px;
+}
+
+.detail-right::-webkit-scrollbar-thumb:hover {
+  background: var(--primary);
 }
 
 .detail-right h2 {
-  color: #ff4757;
+  color: #ffffff;
   margin-bottom: 10px;
+  font-size: 1.8rem;
+  text-shadow: 2px 2px 8px rgba(0, 0, 0, 0.5);
 }
 
 .meta-info {
-  font-size: 0.9rem;
-  color: #ccc;
-  margin-bottom: 15px;
-  line-height: 1.6;
+  font-size: 0.95rem;
+  color: #d0d0d0;
+  margin-bottom: 20px;
+  line-height: 1.8;
+  background: rgba(0, 0, 0, 0.2);
+  padding: 15px;
+  border-radius: 10px;
+  border-left: 3px solid rgba(255, 71, 87, 0.5);
 }
 
 .synopsis {
@@ -237,74 +413,85 @@ h2 {
   overflow-y: auto;
 }
 
-/* Grid Episode List */
+/* ===== EPISODE GRID - Modern List Style ===== */
 .episode-grid {
   display: flex;
-  flex-direction: column; /* Susun ke bawah */
-  gap: 10px; /* Jarak antar episode */
-  max-height: 400px; /* Batas tinggi list */
-  overflow-y: auto; /* Muncul scrollbar jika kepanjangan */
-  padding-right: 10px; /* Jarak biar scrollbar gak nempel */
+  flex-direction: column;
+  gap: 10px;
+  max-height: 450px;
+  overflow-y: auto;
+  padding: 15px;
   margin-top: 15px;
-  background: rgba(0, 0, 0, 0.2); /* Latar belakang agak gelap */
-  padding: 10px;
-  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.25);
+  border-radius: 12px;
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  flex-shrink: 0;
 }
 
-/* Tombol Episode (Gaya List Item) */
 .episode-btn {
   display: flex;
-  justify-content: space-between; /* Judul di kiri, ikon di kanan */
+  justify-content: space-between;
   align-items: center;
   width: 100%;
-  background: #2f3542;
+  background: linear-gradient(135deg, #2f3542 0%, #283039 100%);
   border: 1px solid #454d5e;
   color: #dfe4ea;
-  padding: 12px 15px;
-  border-radius: 6px;
+  padding: 14px 18px;
+  border-radius: 10px;
   cursor: pointer;
   text-align: left;
   font-size: 0.95rem;
-  transition: all 0.2s ease;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
 }
 
-/* Efek Hover */
 .episode-btn:hover {
-  background: #3e4452;
-  border-left: 4px solid var(--primary); /* Aksen warna di kiri saat hover */
-  padding-left: 11px; /* Kompensasi border */
+  background: linear-gradient(135deg, #3e4452 0%, #353d4a 100%);
+  border-left: 5px solid var(--primary);
+  padding-left: 13px;
   color: white;
+  transform: translateX(5px);
+  box-shadow: 0 4px 15px rgba(255, 71, 87, 0.3);
 }
 
-/* Style Scrollbar khusus daftar episode (Biar keren) */
 .episode-grid::-webkit-scrollbar {
   width: 8px;
 }
+
 .episode-grid::-webkit-scrollbar-track {
   background: #1e272e;
+  border-radius: 10px;
 }
+
 .episode-grid::-webkit-scrollbar-thumb {
-  background: #57606f;
-  border-radius: 4px;
+  background: linear-gradient(180deg, #57606f, var(--primary));
+  border-radius: 10px;
 }
+
 .episode-grid::-webkit-scrollbar-thumb:hover {
   background: var(--primary);
 }
 
 .episode-btn.watched {
-  background-color: #202020; /* Warna lebih gelap */
-  color: #888; /* Teks jadi abu-abu */
-  border-color: #333;
+  background: linear-gradient(135deg, #1a1f25 0%, #15191f 100%);
+  color: #666;
+  border-color: #2a2f35;
+  opacity: 0.7;
 }
 
 .episode-btn.watched i {
-  color: #27ae60 !important; /* Ikon Play berubah jadi Hijau */
+  color: #27ae60 !important;
 }
 
-/* Tambahan: Ikon Mata untuk penanda */
 .watched-icon {
   margin-right: 8px;
   font-size: 0.8rem;
+}
+
+.detail-main {
+  width: 65%;
+  display: flex;
+  flex-direction: column;
 }
 
 .nav-links {
@@ -348,9 +535,8 @@ h2 {
   transform: scale(1.1);
 }
 
-/* Kalau aktif (Disukai) */
 .fav-btn.active {
-  color: #ff4757; /* Merah */
+  color: #ff4757;
 }
 
 .genre-content {
@@ -387,24 +573,24 @@ h2 {
 }
 
 .empty-state {
-  grid-column: 1 / -1; /* PENTING: Biar elemen ini melebar memenuhi seluruh grid */
+  grid-column: 1 / -1;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 60px 20px;
-  background: rgba(255, 255, 255, 0.03); /* Background transparan halus */
-  border: 2px dashed #444; /* Garis putus-putus estetik */
+  background: rgba(255, 255, 255, 0.03);
+  border: 2px dashed #444;
   border-radius: 15px;
   text-align: center;
   margin-top: 20px;
 }
 
 .empty-icon {
-  font-size: 5rem; /* Ikon besar */
+  font-size: 5rem;
   color: #444;
   margin-bottom: 20px;
-  animation: float 3s ease-in-out infinite; /* Animasi melayang dikit */
+  animation: float 3s ease-in-out infinite;
 }
 
 .empty-state h3 {
@@ -419,13 +605,12 @@ h2 {
   font-size: 1rem;
 }
 
-/* Tombol Keren (Primary Button) */
 .btn-primary {
   background: var(--primary);
   color: white;
   border: none;
   padding: 12px 30px;
-  border-radius: 30px; /* Tombol bulat lonjong */
+  border-radius: 30px;
   font-weight: bold;
   font-size: 1rem;
   cursor: pointer;
@@ -438,11 +623,10 @@ h2 {
 
 .btn-primary:hover {
   background: #ff6b81;
-  transform: translateY(-3px); /* Efek naik pas di-hover */
+  transform: translateY(-3px);
   box-shadow: 0 8px 20px rgba(255, 71, 87, 0.5);
 }
 
-/* Animasi Melayang */
 @keyframes float {
   0% {
     transform: translateY(0px);
@@ -460,11 +644,10 @@ h2 {
   min-height: 500px;
 }
 
-/* Tab Navigasi Hari */
 .day-tabs {
   display: flex;
   gap: 10px;
-  overflow-x: auto; /* Biar bisa discroll di HP */
+  overflow-x: auto;
   padding-bottom: 10px;
   border-bottom: 2px solid #333;
   margin-bottom: 20px;
@@ -487,27 +670,22 @@ h2 {
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Tab Aktif */
 .day-tab.active {
   color: var(--primary);
   border-bottom: 3px solid var(--primary);
   background: rgba(255, 71, 87, 0.1);
 }
 
-/* Grid Anime Jadwal */
 .schedule-grid {
   display: grid;
-  grid-template-columns: repeat(
-    auto-fill,
-    minmax(250px, 1fr)
-  ); /* List melebar */
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
   gap: 15px;
   max-height: 400px;
   overflow-y: auto;
 }
 
 .schedule-item {
-  display: flex; /* Susun ke samping (Gambar - Teks) */
+  display: flex;
   align-items: center;
   background: #2f3542;
   padding: 10px;
@@ -515,27 +693,25 @@ h2 {
   cursor: pointer;
   border: 1px solid transparent;
   transition: 0.2s;
-  gap: 15px; /* Jarak antara gambar dan teks */
+  gap: 15px;
   overflow: hidden;
 }
 
 .schedule-item:hover {
   background: #3e4452;
   border-color: var(--primary);
-  transform: translateX(5px); /* Efek geser dikit pas hover */
+  transform: translateX(5px);
 }
 
-/* Gambar Kecil di Jadwal */
 .schedule-img {
   width: 50px;
   height: 70px;
   object-fit: cover;
   border-radius: 4px;
-  flex-shrink: 0; /* Biar gambar gak gepeng */
-  background-color: #444; /* Warna placeholder kalau loading */
+  flex-shrink: 0;
+  background-color: #444;
 }
 
-/* Judul Jadwal */
 .schedule-title {
   font-size: 0.9rem;
   font-weight: 600;
@@ -584,20 +760,23 @@ h2 {
   display: flex;
   gap: 10px;
 }
+
 .desktop-search {
   display: flex;
 }
+
 .mobile-icons {
   display: none;
 }
+
 .mobile-search-panel {
   display: none;
 }
+
 .mobile-bottom-nav {
   display: none;
 }
 
-/* Tombol Mobile di Navbar */
 .nav-btn-mobile {
   background: transparent;
   border: none;
@@ -607,25 +786,23 @@ h2 {
   cursor: pointer;
 }
 
-/* Panel Pencarian Mobile (Muncul di bawah navbar) */
 .mobile-search-panel {
-  display: none; /* Default hidden */
+  display: none;
   background: var(--dark);
   padding: 15px;
-  position: fixed; /* Nempel di atas */
-  top: 60px; /* Sesuaikan tinggi navbar */
+  position: fixed;
+  top: 60px;
   left: 0;
   width: 100%;
   z-index: 99;
   box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-  /* Flex biar rapi */
   align-items: center;
   gap: 10px;
   animation: slideDown 0.3s ease;
 }
 
 .mobile-search-panel.active {
-  display: flex; /* Muncul saat class active ditambahkan JS */
+  display: flex;
 }
 
 .mobile-search-panel input {
@@ -655,22 +832,187 @@ h2 {
   }
 }
 
-/* --- TAMPILAN KHUSUS HP (Max 600px) --- */
+:root {
+  --plyr-color-main: #ff4757;
+  --plyr-video-control-color: #ffffff;
+  --plyr-video-control-background-hover: rgba(255, 71, 87, 0.8);
+  --plyr-menu-background: #1e272e;
+  --plyr-menu-color: #fff;
+}
+
+.plyr {
+  border-radius: 8px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  width: 100%;
+  height: 100%;
+}
+
+.plyr__control--overlaid {
+  background: rgba(255, 71, 87, 0.9);
+}
+
+.plyr__control--overlaid:hover {
+  background: #ff6b81;
+}
+
+.video-wrapper {
+  position: relative;
+  padding-bottom: 56.25%;
+  height: 0;
+  overflow: hidden;
+  background: #000;
+  border-radius: 8px;
+}
+
+.video-wrapper iframe,
+.video-wrapper video,
+.plyr {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100% !important;
+  height: 100% !important;
+}
+
+.server-container {
+  margin-top: 15px;
+  padding: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border-radius: 8px;
+}
+
+.server-label {
+  display: block;
+  font-size: 0.9rem;
+  color: #ccc;
+  margin-bottom: 10px;
+  font-weight: bold;
+}
+
+.server-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  max-height: 150px;
+  overflow-y: auto;
+  padding-right: 5px;
+}
+
+.server-btn {
+  background: #2f3542;
+  color: white;
+  border: 1px solid #57606f;
+  padding: 8px 15px;
+  border-radius: 4px;
+  font-size: 0.85rem;
+  cursor: pointer;
+  transition: 0.3s;
+}
+
+.server-btn:hover {
+  background: #3e4452;
+  border-color: var(--primary);
+}
+
+.server-btn.active {
+  background: var(--primary);
+  border-color: var(--primary);
+  font-weight: bold;
+  box-shadow: 0 0 10px rgba(255, 71, 87, 0.5);
+}
+
+.server-list::-webkit-scrollbar {
+  width: 6px;
+}
+
+.server-list::-webkit-scrollbar-thumb {
+  background-color: #555;
+  border-radius: 10px;
+}
+
+.episode-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+  padding-right: 10px;
+}
+
+.episode-section h4 {
+  margin-bottom: 0; /* Reset margin lama */
+  border-left: 4px solid var(--primary);
+  padding-left: 10px;
+  color: white;
+}
+
+/* Style Tombol Sortir */
+.sort-btn {
+  background: transparent;
+  border: 1px solid #555;
+  color: #ccc;
+  padding: 5px 12px;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.85rem;
+  transition: 0.3s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.sort-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: white;
+  border-color: #777;
+}
+
+.sort-btn i {
+  color: var(--primary);
+}
+
+/* ===== RESPONSIVE MOBILE ===== */
+@media (max-width: 768px) {
+  .detail-layout {
+    flex-direction: column;
+    padding: 20px;
+  }
+
+  .detail-sidebar,
+  .detail-main {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .detail-sidebar {
+    align-items: center;
+    position: static;
+  }
+
+  #detail-image {
+    max-width: 220px;
+    margin-bottom: 10px;
+  }
+
+  .synopsis-area {
+    width: 100%;
+    text-align: left;
+  }
+}
+
 @media (max-width: 600px) {
-  /* Sembunyikan elemen Desktop */
   .desktop-only {
     display: none;
   }
+
   .desktop-search {
     display: none;
   }
 
-  /* Munculkan elemen Mobile */
   .mobile-icons {
     display: block;
   }
 
-  /* Navigasi Bawah ala Aplikasi (Bottom Bar) */
   .mobile-bottom-nav {
     display: flex;
     position: fixed;
@@ -699,20 +1041,14 @@ h2 {
     color: var(--primary);
   }
 
-  /* Tambah padding bawah body biar konten gak ketutup bottom nav */
   body {
     padding-bottom: 60px;
   }
-}
 
-/* Responsif Navbar (Opsional biar rapi di HP) */
-@media (max-width: 600px) {
   .nav-links {
-    display: none; /* Sembunyikan tombol fav text di HP kalau sempit, atau sesuaikan */
+    display: none;
   }
-}
 
-@media (max-width: 600px) {
   .video-wrapper iframe {
     height: 250px;
   }
