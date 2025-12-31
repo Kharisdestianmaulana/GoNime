@@ -958,36 +958,36 @@ h2 {
 
 .action-buttons {
   display: flex;
-  flex-wrap: wrap; 
-  gap: 12px; 
+  flex-wrap: wrap;
+  gap: 12px;
   margin-bottom: 20px;
-  align-items: center; 
+  align-items: center;
 }
 
 .action-buttons button,
 .action-buttons a.btn-share {
-  height: 42px; 
-  display: inline-flex; 
+  height: 42px;
+  display: inline-flex;
   align-items: center;
-  justify-content: center; 
-  padding: 0 20px; 
+  justify-content: center;
+  padding: 0 20px;
   border-radius: 30px;
   font-size: 0.9rem;
   font-weight: 600;
   cursor: pointer;
   text-decoration: none;
-  gap: 10px; 
+  gap: 10px;
   transition: 0.3s;
   border: 1px solid transparent;
-  white-space: nowrap; 
-  flex-shrink: 0; 
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 
 .btn-fav {
   background: transparent;
-  border-color: var(--primary) !important; 
+  border-color: var(--primary) !important;
   color: var(--primary);
-  margin-bottom: 0; 
+  margin-bottom: 0;
 }
 
 .btn-fav:hover,
@@ -1019,16 +1019,16 @@ h2 {
 
 #season-container {
   margin-bottom: 20px;
-  position: relative; 
+  position: relative;
 }
 
 #season-dropdown {
   width: 100%;
-  padding: 12px 20px; 
-  background-color: #2f3542; 
-  color: #dfe4ea; 
-  border: 1px solid #454d5e; 
-  border-radius: 8px; 
+  padding: 12px 20px;
+  background-color: #2f3542;
+  color: #dfe4ea;
+  border: 1px solid #454d5e;
+  border-radius: 8px;
   font-size: 0.95rem;
   font-weight: 600;
   cursor: pointer;
@@ -1040,8 +1040,8 @@ h2 {
 
   background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23ff4757%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
   background-repeat: no-repeat;
-  background-position: right 15px top 50%; 
-  background-size: 12px auto; 
+  background-position: right 15px top 50%;
+  background-size: 12px auto;
 
   transition: all 0.3s ease;
   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
@@ -1049,13 +1049,13 @@ h2 {
 
 #season-dropdown:hover,
 #season-dropdown:focus {
-  background-color: #3e4452; 
-  border-color: var(--primary); 
-  box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.2); 
+  background-color: #3e4452;
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px rgba(255, 71, 87, 0.2);
 }
 
 #season-dropdown option {
-  background-color: #1e272e; 
+  background-color: #1e272e;
   color: white;
   padding: 10px;
 }
@@ -1088,13 +1088,13 @@ h2 {
 
 .toast.success i {
   color: #2ecc71;
-} 
+}
 .toast.error i {
   color: #ff4757;
-} 
+}
 .toast.info i {
   color: #3498db;
-} 
+}
 
 @keyframes slideUp {
   from {
@@ -1122,7 +1122,7 @@ h2 {
   display: flex;
   justify-content: space-between;
   padding: 10px 20px;
-  background: #111; 
+  background: #111;
   border-bottom: 1px solid #222;
 }
 
@@ -1155,26 +1155,26 @@ h2 {
 }
 
 .nav-vid-btn:disabled:hover {
-  background: #1a1a1a; 
+  background: #1a1a1a;
 }
 
 .video-header {
-  padding: 20px 25px; 
+  padding: 20px 25px;
   border-bottom: 1px solid #333;
-  margin-bottom: 0; 
+  margin-bottom: 0;
 }
 
 .video-controls {
   display: flex;
   justify-content: space-between;
-  padding: 15px 25px; 
-  background: #1a1a1a; 
+  padding: 15px 25px;
+  background: #1a1a1a;
   border-bottom: 1px solid #333;
-  margin-bottom: 20px; 
+  margin-bottom: 20px;
 }
 
 .server-container {
-  margin: 0 25px 20px 25px; 
+  margin: 0 25px 20px 25px;
   padding: 20px;
   background: #111;
   border-radius: 8px;
@@ -1183,28 +1183,28 @@ h2 {
 
 .server-label {
   display: block;
-  margin-bottom: 15px; 
+  margin-bottom: 15px;
   font-size: 0.95rem;
   color: #ccc;
   font-weight: bold;
-  border-bottom: 1px solid #444; 
+  border-bottom: 1px solid #444;
   padding-bottom: 10px;
 }
 
 .server-list {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px; 
+  gap: 12px;
   padding-bottom: 5px;
 }
 
 .server-btn {
-  padding: 8px 16px; 
+  padding: 8px 16px;
   font-size: 0.85rem;
 }
 
 .video-wrapper {
-  margin: 0 25px 30px 25px; 
+  margin: 0 25px 30px 25px;
   border-radius: 8px;
   overflow: hidden;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
@@ -1235,20 +1235,20 @@ h2 {
   position: fixed;
   bottom: 30px;
   right: 30px;
-  z-index: 99; 
-  background: var(--primary); 
+  z-index: 99;
+  background: var(--primary);
   color: white;
   border: none;
   width: 50px;
   height: 50px;
-  border-radius: 50%; 
+  border-radius: 50%;
   font-size: 1.2rem;
   cursor: pointer;
-  box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4); 
+  box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
 
   opacity: 0;
   visibility: hidden;
-  transform: translateY(20px); 
+  transform: translateY(20px);
   transition: all 0.3s ease;
 
   display: flex;
@@ -1257,19 +1257,19 @@ h2 {
 }
 
 #btn-scroll-top:hover {
-  background: #ff6b81; 
-  transform: translateY(-5px); 
+  background: #ff6b81;
+  transform: translateY(-5px);
 }
 
 #btn-scroll-top.show {
   opacity: 1;
   visibility: visible;
-  transform: translateY(0); 
+  transform: translateY(0);
 }
 
 @media (max-width: 600px) {
   #btn-scroll-top {
-    bottom: 80px; 
+    bottom: 80px;
     right: 20px;
     width: 45px;
     height: 45px;
@@ -1278,8 +1278,8 @@ h2 {
 
 @media (max-width: 600px) {
   .action-buttons {
-    flex-direction: column; 
-    align-items: stretch; 
+    flex-direction: column;
+    align-items: stretch;
   }
   .action-buttons button,
   .action-buttons a.btn-share {
@@ -1380,15 +1380,15 @@ h2 {
 }
 
 .skeleton {
-  background: #2f3542; 
+  background: #2f3542;
   background-image: linear-gradient(
     90deg,
     #2f3542 0px,
     #3e4452 40px,
-     #2f3542 80px
+    #2f3542 80px
   );
-  background-size: 400px 100%; 
-  animation: shimmer 1.5s infinite linear; 
+  background-size: 400px 100%;
+  animation: shimmer 1.5s infinite linear;
   border-radius: 4px;
 }
 
@@ -1397,12 +1397,12 @@ h2 {
   border-radius: 8px;
   overflow: hidden;
   height: 100%;
-  pointer-events: none; 
+  pointer-events: none;
 }
 
 .skeleton-image {
   width: 100%;
-  height: 280px; 
+  height: 280px;
   display: block;
 }
 
@@ -1457,14 +1457,14 @@ h2 {
   }
 
   #episode-range {
-    flex: 1; 
+    flex: 1;
   }
 }
 
 #music-toggle {
   position: fixed;
-  bottom: 90px; 
-  left: 30px; 
+  bottom: 90px;
+  left: 30px;
   width: 50px;
   height: 50px;
   background: linear-gradient(45deg, #ff4757, #ff6b81);
@@ -1507,7 +1507,7 @@ h2 {
 .music-player-container {
   position: fixed;
   bottom: 90px;
-  left: 90px; 
+  left: 90px;
   width: 300px;
   background: rgba(30, 39, 46, 0.95);
   backdrop-filter: blur(10px);
@@ -1516,7 +1516,7 @@ h2 {
   padding: 15px;
   box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
   z-index: 1000;
-  display: none; 
+  display: none;
   animation: slideInLeft 0.3s ease;
 }
 
@@ -1626,8 +1626,8 @@ h2 {
 @media (max-width: 600px) {
   .music-player-container {
     left: 20px;
-    bottom: 150px; 
-    width: calc(100% - 40px); 
+    bottom: 150px;
+    width: calc(100% - 40px);
   }
 }
 
