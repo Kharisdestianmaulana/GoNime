@@ -1511,3 +1511,4 @@ function renderVideoEpisodeBar(currentSlug) {
 
 // --- INIT ---
 window.onload = () => fetchAnime(1);
+
