@@ -653,42 +653,100 @@ function formatTime(seconds) {
   return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
-async function openGenreModal() {
-  genreModal.style.display = "flex";
-  if (isGenreLoaded) return;
-  genreListContainer.innerHTML = "<p>Loading genre...</p>";
+function playVideoSource(streamUrl, episodeId) {
+  const wrapper = document.querySelector(".video-wrapper");
 
-  try {
-    const res = await fetch(`${BASE_URL}/anime/genre`);
-    const result = await res.json();
-    let genres = [];
-    if (result.data && result.data.genreList)
-      genres = Object.values(result.data.genreList);
-    else if (Array.isArray(result.data)) genres = result.data;
+  // Hapus player lama
+  if (playerInstance) {
+    playerInstance.destroy();
+    playerInstance = null;
+  }
 
-    if (genres.length > 0) {
-      genreListContainer.innerHTML = "";
-      genres.forEach((g) => {
-        const name = g.title || g.genre_name || g.name;
-        const slug = g.genreId || g.slug || g.id;
-        if (name && slug) {
-          const tag = document.createElement("div");
-          tag.className = "genre-tag";
-          tag.innerText = name;
-          tag.onclick = () => {
-            fetchAnimeByGenre(slug, name, 1);
-            genreModal.style.display = "none";
-          };
-          genreListContainer.appendChild(tag);
+  wrapper.innerHTML = "";
+  const isMp4 = streamUrl.includes(".mp4");
+
+  if (isMp4) {
+    // === LOGIKA VIDEO PLAYER (MP4) DENGAN RESUME & AUTO LANDSCAPE ===
+    wrapper.innerHTML = `<video id="player" playsinline controls autoplay><source src="${streamUrl}" type="video/mp4" /></video>`;
+
+    if (typeof Plyr !== "undefined") {
+      playerInstance = new Plyr("#player", {
+        controls: [
+          "play-large",
+          "play",
+          "progress",
+          "current-time",
+          "duration",
+          "mute",
+          "volume",
+          "captions",
+          "settings",
+          "pip",
+          "airplay",
+          "fullscreen",
+        ],
+        autoplay: true,
+      });
+
+      // --- FITUR 1: AUTO LANDSCAPE SAAT FULLSCREEN (MOBILE) ---
+      playerInstance.on("enterfullscreen", () => {
+        // Cek apakah browser mendukung fitur kunci layar
+        if (screen.orientation && screen.orientation.lock) {
+          // Paksa kunci ke Landscape
+          screen.orientation.lock("landscape").catch((err) => {
+            console.warn(
+              "Gagal rotasi otomatis (mungkin tidak didukung device):",
+              err
+            );
+          });
         }
       });
-      isGenreLoaded = true;
-    } else {
-      genreListContainer.innerHTML = "<p>Gagal.</p>";
+
+      playerInstance.on("exitfullscreen", () => {
+        // Kembalikan ke posisi semula (biasanya Portrait) saat keluar fullscreen
+        if (screen.orientation && screen.orientation.unlock) {
+          screen.orientation.unlock();
+        }
+      });
+
+      // --- FITUR 2: RESUME PLAYBACK (LANJUT NONTON) ---
+      playerInstance.on("ready", () => {
+        const lastTime = getVideoProgress(episodeId);
+        if (lastTime > 5) {
+          playerInstance.currentTime = lastTime;
+          showToast(`Lanjut menonton dari ${formatTime(lastTime)}`, "success");
+        }
+        playerInstance.play();
+      });
+
+      let lastSave = 0;
+      playerInstance.on("timeupdate", (event) => {
+        const now = playerInstance.currentTime;
+        if (Math.abs(now - lastSave) > 5) {
+          saveVideoProgress(episodeId, now);
+          lastSave = now;
+        }
+      });
+
+      playerInstance.on("pause", () => {
+        saveVideoProgress(episodeId, playerInstance.currentTime);
+      });
+
+      playerInstance.on("ended", () => {
+        saveVideoProgress(episodeId, 0);
+      });
     }
-  } catch (e) {
-    genreListContainer.innerHTML = "<p>Error.</p>";
+  } else {
+    // === UNTUK IFRAME BIASA ===
+    wrapper.innerHTML = `<iframe src="${streamUrl}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
   }
+}
+
+// Helper format waktu (Pastikan ini ada di script.js, kalau belum ada copas juga)
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
 async function fetchAnimeByGenre(slug, genreName, page = 1) {
