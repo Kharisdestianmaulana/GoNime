@@ -1631,3 +1631,67 @@ h2 {
   }
 }
 
+.promo-section {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+  margin-top: 30px; /* Jarak dari tombol Next/Prev */
+  margin-bottom: 50px; /* Jarak ke footer/bawah layar */
+  padding: 0 20px;
+}
+
+.nani-btn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(
+    45deg,
+    #6c5ce7,
+    #a29bfe
+  ); /* Warna Ungu Khas Gacha */
+  color: white;
+  padding: 15px 30px;
+  border-radius: 50px; /* Bentuk kapsul */
+  text-decoration: none;
+  font-weight: bold;
+  font-size: 1.1rem;
+  box-shadow: 0 5px 15px rgba(108, 92, 231, 0.4);
+  transition: transform 0.3s, box-shadow 0.3s;
+  border: 2px solid rgba(255, 255, 255, 0.2);
+}
+
+.nani-btn:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 25px rgba(108, 92, 231, 0.6);
+  color: white;
+}
+
+.nani-btn i {
+  font-size: 1.3rem;
+}
+
+/* Animasi Berkedip Dikit Biar Menarik Perhatian */
+@keyframes glow {
+  0% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.1);
+  }
+  100% {
+    filter: brightness(1);
+  }
+}
+
+.nani-btn {
+  animation: glow 3s infinite;
+}
+
+/* Responsive HP */
+@media (max-width: 600px) {
+  .nani-btn {
+    width: 100%; /* Full width di HP */
+    justify-content: center;
+    font-size: 1rem;
+  }
+}
