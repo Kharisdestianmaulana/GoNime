@@ -25,23 +25,61 @@ const scheduleListContainer = document.getElementById("schedule-list");
 const STORAGE_KEY_WATCHED = "SANKA_WATCHED_HISTORY";
 const STORAGE_KEY_FAV = "SANKA_FAVORITES_DATA";
 const STORAGE_KEY_HISTORY_LIST = "SANKA_HISTORY_LIST";
-
+const scrollBtn = document.getElementById("btn-scroll-top");
+const EPISODES_PER_PAGE = 50;
 let currentPage = 1;
-let currentView = "ongoing"; 
+let currentView = "ongoing";
 
-let currentGenreSlug = ""; 
+let currentGenreSlug = "";
 
-let currentGenreName = ""; 
+let currentGenreName = "";
 
 let scheduleData = [];
 let isGenreLoaded = false;
 let playerInstance = null;
+let activeAnimeId = "";
+let activeAnimeImage = "";
+
+const musicPlaylist = [
+
+  {
+    id: "jfKfPfyJRdk",
+    title: "Lofi Girl Radio",
+    artist: "Beats to Relax/Study to",
+  },
+  {
+    id: "5yx6BWlEVcY",
+    title: "Chillhop Radio",
+    artist: "Jazzy & Lofi Hip Hop",
+  },
+  {
+    id: "21qNtO_r6-s",
+    title: "Naruto Lofi",
+    artist: "Konoha Vibes",
+  },
+  {
+    id: "H7Vq_2kX2bs",
+    title: "Ghibli Lofi",
+    artist: "Studio Ghibli Relaxing",
+  },
+  {
+    id: "uAg_aQ-0kKw",
+    title: "Japan Aesthetic",
+    artist: "Japanese Lofi Hip Hop",
+  },
+];
+
+let currentMusicIndex = 0;
+let musicPlayer = null; 
+
+let isMusicPlaying = false;
+let progressInterval = null;
 
 async function fetchAnime(page = 1) {
   try {
     currentView = "ongoing";
-    loading.style.display = "block";
-    grid.innerHTML = "";
+    showSkeleton(); 
+
     document.querySelector("h2").innerText = "Daftar Anime Terbaru (Ongoing)";
 
     paginationContainer.style.display = "flex";
@@ -55,22 +93,23 @@ async function fetchAnime(page = 1) {
     const animeList = normalizeData(result);
 
     if (animeList && animeList.length > 0) {
-      renderAnime(animeList);
+      renderAnime(animeList); 
+
       currentPage = page;
+      loadContinueWatching();
     } else {
       grid.innerHTML = "<p>Gagal memuat data.</p>";
     }
-    loading.style.display = "none";
+
   } catch (error) {
     console.error(error);
     loading.innerHTML = `Error: ${error.message}`;
   }
 }
-
 async function fetchCompletedAnime(page = 1) {
   try {
     currentView = "completed";
-    loading.style.display = "block";
+    showSkeleton();
     grid.innerHTML = "";
     document.querySelector("h2").innerText = "Daftar Anime Tamat (Completed)";
 
@@ -90,7 +129,6 @@ async function fetchCompletedAnime(page = 1) {
     } else {
       grid.innerHTML = "<p>Gagal memuat data anime tamat.</p>";
     }
-    loading.style.display = "none";
   } catch (error) {
     console.error(error);
     loading.innerHTML = `Error: ${error.message}`;
@@ -104,7 +142,7 @@ window.searchAnime = async function () {
     return;
   }
 
-  loading.style.display = "block";
+  showSkeleton();
   loading.innerText = `Mencari "${query}"...`;
   grid.innerHTML = "";
   document.querySelector("h2").innerText = `Hasil Pencarian: "${query}"`;
@@ -118,7 +156,6 @@ window.searchAnime = async function () {
     if (list && list.length > 0) renderAnime(list);
     else
       grid.innerHTML = `<div class="empty-state"><h3>Anime tidak ditemukan 😢</h3></div>`;
-    loading.style.display = "none";
   } catch (e) {
     loading.innerText = "Error saat mencari.";
   }
@@ -137,7 +174,6 @@ window.changePage = function (dir) {
   } else if (currentView === "completed") {
     fetchCompletedAnime(nextPage);
   } else if (currentView === "genre") {
-
     fetchAnimeByGenre(currentGenreSlug, currentGenreName, nextPage);
   }
 
@@ -190,13 +226,26 @@ function renderAnime(animeList) {
 }
 
 async function showAnimeDetail(animeId, title, imageTemp) {
-
+  activeAnimeId = animeId;
+  activeAnimeImage = imageTemp;
   detailModal.style.display = "flex";
   detailImage.src =
     imageTemp || "https://via.placeholder.com/200x300?text=No+Image";
   detailTitle.innerText = title;
   detailSynopsis.innerHTML = "Mengambil detail...";
   detailMeta.innerHTML = "Mohon tunggu...";
+
+  const btnWa = document.getElementById("btn-share-wa");
+
+  const textShare = `Nonton ${title} gratis di GoNime! Cek sini: ${BASE_URL}`;
+
+  btnWa.href = `https://wa.me/?text=${encodeURIComponent(textShare)}`;
+
+  window.copyLink = function () {
+    navigator.clipboard.writeText(textShare).then(() => {
+      showToast("Link berhasil disalin!", "success");
+    });
+  };
 
   const episodeContainer = document.getElementById("episode-list");
   episodeContainer.innerHTML =
@@ -264,26 +313,48 @@ async function showAnimeDetail(animeId, title, imageTemp) {
 
     if (!totalEps || totalEps === "?" || totalEps === "null") {
       if (currentEpisodes && currentEpisodes.length > 0) {
-        totalEps = currentEpisodes.length; 
-
+        totalEps = currentEpisodes.length;
       } else {
         totalEps = "?";
       }
     }
 
+    const releaseDate =
+      data.released || data.release_date || data.date || data.aired || "?";
+    const studio = data.studio || data.studios || data.produser || "?";
+    const type = data.type || "?";
+
     detailMeta.innerHTML = `
-        <div style="display:grid; grid-template-columns: 100px 1fr; gap:5px;">
-            <span><strong>Genre</strong></span> <span>: ${genres}</span>
-            <span><strong>Status</strong></span> <span>: ${status}</span>
-            <span><strong>Eps</strong></span> <span>: ${totalEps}</span>
-            <span><strong>Rating</strong></span> <span>: <span style="color:#f1c40f">★ ${rating}</span></span>
+        <div style="display:grid; grid-template-columns: 110px 1fr; gap:8px; align-items: flex-start;">
+
+            <span style="color:#aaa;">Tipe</span> 
+            <span>: ${type}</span>
+
+            <span style="color:#aaa;">Rilis</span> 
+            <span>: ${releaseDate}</span>
+
+            <span style="color:#aaa;">Studio</span> 
+            <span>: ${studio}</span>
+
+            <span style="color:#aaa;">Genre</span> 
+            <span style="color:var(--primary); font-weight:bold;">: ${genres}</span>
+
+            <span style="color:#aaa;">Status</span> 
+            <span>: ${status}</span>
+
+            <span style="color:#aaa;">Episode</span> 
+            <span>: ${totalEps}</span>
+
+            <span style="color:#aaa;">Rating</span> 
+            <span>: <span style="color:#f1c40f">★ ${rating}</span></span>
+
         </div>`;
 
     if (data.thumb || data.poster) detailImage.src = data.thumb || data.poster;
 
     isSortAscending = false;
-    updateSortButtonUI();
-    renderEpisodeList(animeId, title, imageTemp);
+    updateEpisodeRangeUI();
+    renderEpisodeListFromRange();
   } catch (error) {
     console.error(error);
     detailSynopsis.innerText = "Gagal memuat detail.";
@@ -345,6 +416,7 @@ function renderSeasonDropdown(list, currentId) {
 async function fetchVideoReal(episodeSlug, fullTitle) {
   videoModal.style.display = "flex";
   modalTitle.innerText = `Putar: ${fullTitle}`;
+  setupVideoNav(episodeSlug);
   const wrapper = document.querySelector(".video-wrapper");
   const serverListDiv = document.getElementById("server-list");
 
@@ -366,7 +438,7 @@ async function fetchVideoReal(episodeSlug, fullTitle) {
 
     if (servers.length > 0) {
       if (serverListDiv) renderServerButtons(servers);
-      playVideoSource(servers[0].url); 
+      playVideoSource(servers[0].url);
 
       setTimeout(() => {
         const f = document.querySelector(".server-btn");
@@ -389,7 +461,6 @@ function extractAllServers(data) {
       if (isValidVideoUrl(obj)) foundServers.push({ url: obj });
     } else if (typeof obj === "object" && obj !== null) {
       for (let key in obj) {
-
         if (key.match(/poster|thumb|image|cover|subtitle|sub|caption/i))
           continue;
 
@@ -428,8 +499,7 @@ function extractAllServers(data) {
       cleanUrl.includes("otakudesu.cloud/anime/") ||
       cleanUrl.includes("otakudesu.cam/anime/")
     ) {
-      return; 
-
+      return;
     }
 
     let protocolAgnostic = cleanUrl.replace(/^https?:/, "");
@@ -562,7 +632,7 @@ async function openGenreModal() {
 }
 
 async function fetchAnimeByGenre(slug, genreName, page = 1) {
-  loading.style.display = "block";
+  showSkeleton();
   grid.innerHTML = "";
 
   currentView = "genre";
@@ -591,8 +661,6 @@ async function fetchAnimeByGenre(slug, genreName, page = 1) {
     if (list && list.length > 0) renderAnime(list);
     else
       grid.innerHTML = `<div class="empty-state"><h3>Genre Kosong / Habis</h3></div>`;
-
-    loading.style.display = "none";
   } catch (e) {
     console.error(e);
     loading.innerText = "Error.";
@@ -639,6 +707,7 @@ function renderScheduleTabs() {
 function renderScheduleList(dayData) {
   scheduleListContainer.innerHTML = "";
   let list = [];
+
   if (Array.isArray(dayData)) list = dayData;
   else if (dayData.list || dayData.animeList)
     list = dayData.list || dayData.animeList;
@@ -654,22 +723,29 @@ function renderScheduleList(dayData) {
     scheduleListContainer.innerHTML = "<p>Kosong.</p>";
     return;
   }
+
   list.forEach((anime) => {
     const div = document.createElement("div");
     div.className = "schedule-item";
+
     let img =
-      anime.image ||
+      anime.poster ||
       anime.thumb ||
-      "https://via.placeholder.com/50x70?text=IMG";
+      anime.image ||
+      "https://via.placeholder.com/50x70?text=No+Img";
+
     let id = anime.id || anime.slug || anime.endpoint;
     if (id && id.includes("/"))
       id = id
         .split("/")
         .filter((p) => p.length > 0)
         .pop();
-    div.innerHTML = `<img src="${img}" class="schedule-img" onerror="this.src='https://via.placeholder.com/50x70'"><div class="schedule-title">${
-      anime.title || anime.anime_name
-    }</div>`;
+
+    div.innerHTML = `
+        <img src="${img}" class="schedule-img" loading="lazy" onerror="this.src='https://via.placeholder.com/50x70?text=Err'">
+        <div class="schedule-title">${anime.title || anime.anime_name}</div>
+    `;
+
     div.onclick = () => {
       scheduleModal.style.display = "none";
       showAnimeDetail(id, anime.title, img);
@@ -710,10 +786,10 @@ function toggleFavorite(id, title, image) {
   const idx = favs.findIndex((a) => a.id === id);
   if (idx > -1) {
     favs.splice(idx, 1);
-    alert("Dihapus.");
+    showToast("Dihapus dari Favorit", "error");
   } else {
     favs.push({ id, title, image });
-    alert("Disimpan ❤️");
+    showToast("Berhasil disimpan ke Favorit", "success");
   }
   localStorage.setItem(STORAGE_KEY_FAV, JSON.stringify(favs));
   updateFavoriteBtnUI(id);
@@ -755,6 +831,7 @@ function markAsWatched(animeId, epSlug, title, image) {
     localStorage.setItem(STORAGE_KEY_WATCHED, JSON.stringify(h));
   }
   if (title && image) addToHistoryList(animeId, title, image, epSlug);
+  loadContinueWatching();
 }
 function addToHistoryList(id, title, image, lastEp) {
   let list = getHistoryList();
@@ -803,12 +880,17 @@ window.closeDetail = () => (detailModal.style.display = "none");
 window.closeModal = () => {
   videoModal.style.display = "none";
   document.querySelector(".video-wrapper").innerHTML = "";
+  if (playerInstance) {
+    playerInstance.destroy();
+    playerInstance = null;
+  }
+  loadContinueWatching();
 };
 window.closeGenreModal = () => (genreModal.style.display = "none");
 window.closeScheduleModal = () => (scheduleModal.style.display = "none");
 
 window.toggleSortOrder = function () {
-  isSortAscending = !isSortAscending; 
+  isSortAscending = !isSortAscending;
 
   updateSortButtonUI();
 
@@ -820,47 +902,346 @@ window.toggleSortOrder = function () {
   renderEpisodeList(animeId, title, image);
 };
 
-function updateSortButtonUI() {
-  const btn = document.getElementById("btn-sort");
-  if (isSortAscending) {
+function loadContinueWatching() {
 
-    btn.innerHTML =
-      '<i class="fas fa-sort-amount-down-alt"></i> Ke Episode Terbaru';
+  if (currentView !== "ongoing" || currentPage !== 1) {
+    const area = document.getElementById("continue-watching-area");
+    if (area) area.style.display = "none";
+    return;
+  }
+
+  const list = getHistoryList(); 
+
+  const container = document.getElementById("continue-watching-area");
+  const gridCW = document.getElementById("cw-grid");
+
+  if (!container || !gridCW) return;
+
+  const recentList = list.slice(0, 3);
+
+  if (recentList.length === 0) {
+    container.style.display = "none";
+    return;
+  }
+
+  container.style.display = "block";
+  gridCW.innerHTML = "";
+
+  recentList.forEach((anime) => {
+    const card = document.createElement("div");
+    card.className = "anime-card";
+    card.style.border = "1px solid #2ecc71"; 
+
+    card.innerHTML = `
+      <div style="position: relative;">
+        <img src="${anime.image}" style="opacity: 0.8;">
+        <div style="position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); font-size: 3rem; color: #fff; text-shadow: 0 0 10px rgba(0,0,0,0.8);">
+            <i class="fas fa-play"></i>
+        </div>
+        <div style="position: absolute; bottom: 0; left: 0; width: 100%; background: rgba(46, 204, 113, 0.9); color: #fff; font-size: 0.8rem; padding: 3px 10px; font-weight: bold;">
+            Lanjut: ${anime.lastEp.replace("Episode", "Eps")}
+        </div>
+      </div>
+      <div class="card-info">
+          <div class="card-title">${anime.title}</div>
+      </div>`;
+
+    card.onclick = async () => {
+
+      if (typeof showToast === "function")
+        showToast("Memuat video terakhir...", "info");
+      activeAnimeId = anime.id;
+      activeAnimeImage = anime.image;
+      markAsWatched(anime.id, anime.lastEp, anime.title, anime.image);
+
+      try {
+
+        const response = await fetch(`${BASE_URL}/anime/anime/${anime.id}`);
+        const result = await response.json();
+        const data = result.data || {};
+
+        currentEpisodes = [];
+        const keys = Object.keys(data);
+        const episodeKey = keys.find(
+          (k) => k.toLowerCase().includes("episode") && Array.isArray(data[k])
+        );
+
+        if (episodeKey) {
+          currentEpisodes = data[episodeKey];
+        } else {
+
+          for (const k of keys) {
+            if (
+              !k.toLowerCase().includes("genre") &&
+              Array.isArray(data[k]) &&
+              data[k].length > 0 &&
+              !data[k][0].genreId
+            ) {
+              currentEpisodes = data[k];
+              break;
+            }
+          }
+        }
+
+        fetchVideoReal(anime.lastEp, anime.title);
+      } catch (e) {
+        console.error("Gagal load direct video:", e);
+
+        showAnimeDetail(anime.id, anime.title, anime.image);
+      }
+    };
+
+    gridCW.appendChild(card);
+  });
+}
+
+function showToast(message, type = "info") {
+  const container = document.getElementById("toast-container");
+  const toast = document.createElement("div");
+
+  let icon = "fa-info-circle";
+  if (type === "success") icon = "fa-check-circle";
+  if (type === "error") icon = "fa-times-circle";
+
+  toast.className = `toast ${type}`;
+  toast.innerHTML = `<i class="fas ${icon}"></i> <span>${message}</span>`;
+
+  container.appendChild(toast);
+
+  setTimeout(() => {
+    toast.classList.add("hide");
+    toast.addEventListener("animationend", () => {
+      toast.remove();
+    });
+  }, 3000);
+}
+
+function setupVideoNav(currentSlug) {
+  const prevBtn = document.getElementById("btn-video-prev");
+  const nextBtn = document.getElementById("btn-video-next");
+
+  if (!currentEpisodes || currentEpisodes.length === 0) {
+    prevBtn.disabled = true;
+    nextBtn.disabled = true;
+    return;
+  }
+
+  let sortedEps = [...currentEpisodes].sort((a, b) => {
+    const getEpNum = (t) => {
+      const m = t.match(/Episode\s+(\d+)/i) || t.match(/(\d+)/);
+      return m ? parseFloat(m[1]) : 0;
+    };
+    return getEpNum(a.title) - getEpNum(b.title);
+  });
+
+  const currentIndex = sortedEps.findIndex((ep) => {
+    let id = ep.episodeId || ep.episode_slug || ep.slug || ep.id || ep.endpoint;
+    if (id && id.includes("/"))
+      id = id
+        .split("/")
+        .filter((p) => p.length > 0)
+        .pop();
+    return id === currentSlug;
+  });
+
+  if (currentIndex > 0) {
+    const prevEp = sortedEps[currentIndex - 1];
+    let prevId = getCleanId(prevEp);
+
+    prevBtn.disabled = false;
+    prevBtn.onclick = () => {
+
+      markAsWatched(activeAnimeId, prevId, prevEp.title, activeAnimeImage);
+      fetchVideoReal(prevId, prevEp.title);
+    };
+    prevBtn.title = prevEp.title;
   } else {
+    prevBtn.disabled = true;
+  }
 
-    btn.innerHTML = '<i class="fas fa-sort-amount-down"></i> Ke Episode 1';
+  if (currentIndex < sortedEps.length - 1 && currentIndex !== -1) {
+    const nextEp = sortedEps[currentIndex + 1];
+    let nextId = getCleanId(nextEp);
+
+    nextBtn.disabled = false;
+    nextBtn.onclick = () => {
+
+      markAsWatched(activeAnimeId, nextId, nextEp.title, activeAnimeImage);
+      fetchVideoReal(nextId, nextEp.title);
+    };
+    nextBtn.title = nextEp.title;
+  } else {
+    nextBtn.disabled = true;
   }
 }
 
+function getCleanId(ep) {
+  let id = ep.episodeId || ep.episode_slug || ep.slug || ep.id || ep.endpoint;
+  if (id && id.includes("/"))
+    id = id
+      .split("/")
+      .filter((p) => p.length > 0)
+      .pop();
+  return id;
+}
+
+window.onscroll = function () {
+  toggleScrollButton();
+};
+
+function toggleScrollButton() {
+
+  if (
+    document.body.scrollTop > 300 ||
+    document.documentElement.scrollTop > 300
+  ) {
+    scrollBtn.classList.add("show");
+  } else {
+    scrollBtn.classList.remove("show");
+  }
+}
+
+function scrollToTop() {
+
+  window.scrollTo({
+    top: 0,
+    behavior: "smooth",
+  });
+}
+
+function showSkeleton() {
+  const grid = document.getElementById("anime-grid");
+  const loadingText = document.getElementById("loading");
+
+  if (loadingText) loadingText.style.display = "none";
+
+  grid.innerHTML = ""; 
+
+  const skeletonHTML = `
+    <div class="anime-card skeleton-card">
+      <div class="skeleton-image skeleton"></div>
+      <div class="skeleton-title skeleton"></div>
+      <div class="skeleton-text skeleton"></div>
+    </div>
+  `;
+
+  for (let i = 0; i < 12; i++) {
+    grid.innerHTML += skeletonHTML;
+  }
+}
+
+function updateEpisodeRangeUI() {
+  const rangeSelect = document.getElementById("episode-range");
+
+  if (!rangeSelect) return;
+
+  rangeSelect.onchange = function () {
+    renderEpisodeListFromRange();
+  };
+
+  const total = currentEpisodes.length;
+
+  if (total <= EPISODES_PER_PAGE) {
+    rangeSelect.style.display = "none";
+    rangeSelect.innerHTML = '<option value="0">Semua</option>';
+    return;
+  }
+
+  rangeSelect.style.display = "block";
+  rangeSelect.innerHTML = "";
+
+  let sortedEps = [...currentEpisodes].sort((a, b) => {
+    const getEpNumber = (str) => {
+      const match = str.match(/Episode\s+(\d+)/i) || str.match(/(\d+)/);
+      return match ? parseFloat(match[1]) : 0;
+    };
+    const numA = getEpNumber(a.title);
+    const numB = getEpNumber(b.title);
+
+    return isSortAscending ? numA - numB : numB - numA;
+  });
+
+  const totalPages = Math.ceil(total / EPISODES_PER_PAGE);
+
+  for (let i = 0; i < totalPages; i++) {
+    const start = i * EPISODES_PER_PAGE;
+    const end = Math.min(start + EPISODES_PER_PAGE, total);
+
+    const firstEpObj = sortedEps[start];
+    const lastEpObj = sortedEps[end - 1];
+
+    const getNum = (item) => {
+      if (!item || !item.title) return "?";
+
+      const m =
+        item.title.match(/Episode\s+(\d+)/i) || item.title.match(/(\d+)/);
+      return m ? m[1] : "?";
+    };
+
+    const labelStart = getNum(firstEpObj);
+    const labelEnd = getNum(lastEpObj);
+
+    const option = document.createElement("option");
+    option.value = i;
+
+    option.text = `List ${i + 1} (Eps ${labelStart} - ${labelEnd})`;
+
+    rangeSelect.appendChild(option);
+  }
+
+  if (rangeSelect.options.length > 0) {
+    rangeSelect.value = 0;
+  }
+}
+
+function renderEpisodeListFromRange() {
+
+  const title = document.getElementById("detail-title").innerText;
+
+  renderEpisodeList(activeAnimeId, title, activeAnimeImage);
+}
+
+window.toggleSortOrder = function () {
+  isSortAscending = !isSortAscending;
+  updateSortButtonUI();
+
+  updateEpisodeRangeUI();
+  renderEpisodeListFromRange();
+};
+
 function renderEpisodeList(animeId, title, image) {
   const container = document.getElementById("episode-list");
+  const rangeSelect = document.getElementById("episode-range");
 
   container.setAttribute("data-id", animeId);
   container.setAttribute("data-image", image);
-
   container.innerHTML = "";
 
   if (currentEpisodes.length > 0) {
+
     let episodesToSort = [...currentEpisodes];
-
     episodesToSort.sort((a, b) => {
-
       const getEpNumber = (str) => {
         const match = str.match(/Episode\s+(\d+)/i) || str.match(/(\d+)/);
         return match ? parseFloat(match[1]) : 0;
       };
-
       const numA = getEpNumber(a.title);
       const numB = getEpNumber(b.title);
+      return isSortAscending ? numA - numB : numB - numA; 
 
-      if (numA !== numB) {
-        return isSortAscending ? numA - numB : numB - numA;
-      }
-
-      return isSortAscending ? 1 : -1;
     });
 
-    episodesToSort.forEach((ep) => {
+    const pageIndex = parseInt(rangeSelect.value) || 0;
+
+    let episodesToRender = episodesToSort;
+
+    if (rangeSelect.style.display !== "none") {
+      const start = pageIndex * EPISODES_PER_PAGE;
+      const end = start + EPISODES_PER_PAGE;
+      episodesToRender = episodesToSort.slice(start, end);
+    }
+
+    episodesToRender.forEach((ep) => {
       let epId =
         ep.episodeId || ep.episode_slug || ep.slug || ep.id || ep.endpoint;
       if (epId && epId.includes("/"))
@@ -874,7 +1255,6 @@ function renderEpisodeList(animeId, title, image) {
 
       const btn = document.createElement("div");
       btn.className = `episode-btn ${isWatched ? "watched" : ""}`;
-
       btn.innerHTML = `
                 <span style="display:flex; align-items:center; gap:8px;">
                     ${
@@ -892,12 +1272,11 @@ function renderEpisodeList(animeId, title, image) {
             `;
 
       btn.onclick = () => {
-        markAsWatched(animeId, epId, title, image);
-        btn.classList.add("watched");
 
+        markAsWatched(activeAnimeId, epId, title, activeAnimeImage);
+        btn.classList.add("watched");
         btn.querySelector("i").className = "fas fa-check-circle";
         btn.querySelector("i").style.color = "#27ae60";
-
         fetchVideoReal(epId, epTitle);
       };
       container.appendChild(btn);
@@ -907,6 +1286,210 @@ function renderEpisodeList(animeId, title, image) {
       "<p style='text-align:center; padding:20px; color:#aaa;'>Belum ada episode.</p>";
   }
 }
+
+document.addEventListener("keydown", (e) => {
+
+  const modal = document.getElementById("video-modal");
+  if (!modal || modal.style.display !== "flex") return;
+
+  if (!playerInstance) return;
+
+  const tag = document.activeElement.tagName.toUpperCase();
+  if (tag === "INPUT" || tag === "TEXTAREA") return;
+
+  switch (e.key) {
+    case " ": 
+
+    case "k": 
+
+      e.preventDefault(); 
+
+      playerInstance.togglePlay(); 
+
+      showToast(playerInstance.playing ? "Pause ⏸️" : "Play ▶️", "info");
+      break;
+
+    case "f": 
+
+    case "F":
+      playerInstance.fullscreen.toggle();
+      break;
+
+    case "ArrowRight": 
+
+      playerInstance.forward(10); 
+
+      showToast("Maju 10s ⏩", "info");
+      break;
+
+    case "ArrowLeft": 
+
+      playerInstance.rewind(10); 
+
+      showToast("Mundur 10s ⏪", "info");
+      break;
+
+    case "m": 
+
+    case "M":
+      playerInstance.muted = !playerInstance.muted;
+      showToast(playerInstance.muted ? "Muted 🔇" : "Unmuted 🔊", "info");
+      break;
+  }
+});
+
+function onYouTubeIframeAPIReady() {
+  musicPlayer = new YT.Player("youtube-player-hidden", {
+    height: "1", 
+
+    width: "1",
+    videoId: musicPlaylist[0].id,
+    playerVars: {
+      playsinline: 1,
+      controls: 0,
+      disablekb: 1,
+      origin: window.location.origin, 
+
+    },
+    events: {
+      onReady: onMusicPlayerReady,
+      onStateChange: onMusicStateChange,
+      onError: onMusicError, 
+
+    },
+  });
+}
+
+function onMusicPlayerReady(event) {
+
+  event.target.setVolume(100);
+  event.target.unMute();
+
+  updateMusicUI();
+}
+
+function onMusicStateChange(event) {
+
+  if (event.data === YT.PlayerState.PLAYING) {
+    isMusicPlaying = true;
+    document.getElementById("mp-play-btn").innerHTML =
+      '<i class="fas fa-pause"></i>';
+    startProgress();
+  } else if (event.data === YT.PlayerState.PAUSED) {
+    isMusicPlaying = false;
+    document.getElementById("mp-play-btn").innerHTML =
+      '<i class="fas fa-play"></i>';
+    stopProgress();
+  } else if (event.data === YT.PlayerState.ENDED) {
+    nextSong(); 
+
+  }
+}
+
+function onMusicError(event) {
+  console.error("YouTube Player Error Code:", event.data);
+
+  isMusicPlaying = false;
+  stopProgress();
+  document.getElementById("mp-play-btn").innerHTML =
+    '<i class="fas fa-play"></i>';
+
+  showToast(
+    "Lagu ini dibatasi oleh YouTube. Silakan pilih lagu lain.",
+    "error"
+  );
+
+}
+
+if (!document.getElementById("yt-api-script")) {
+  const tag = document.createElement("script");
+  tag.src = "https://www.youtube.com/iframe_api";
+  tag.id = "yt-api-script";
+  const firstScriptTag = document.getElementsByTagName("script")[0];
+  firstScriptTag.parentNode.insertBefore(tag, firstScriptTag);
+}
+
+function toggleMusicPlayer() {
+  const playerUI = document.getElementById("music-player");
+  if (!playerUI) return;
+
+  if (playerUI.style.display === "none" || playerUI.style.display === "") {
+    playerUI.style.display = "block";
+  } else {
+    playerUI.style.display = "none";
+  }
+}
+
+function updateMusicUI() {
+  const song = musicPlaylist[currentMusicIndex];
+  document.getElementById("mp-title").innerText = song.title;
+  document.getElementById("mp-artist").innerText = song.artist;
+  const coverUrl = `https://img.youtube.com/vi/${song.id}/0.jpg`;
+  document.getElementById("mp-cover").src = coverUrl;
+}
+
+function togglePlayMusic() {
+  if (!musicPlayer || !musicPlayer.playVideo) {
+    showToast("Player sedang memuat...", "info");
+    return;
+  }
+
+  if (isMusicPlaying) {
+    musicPlayer.pauseVideo();
+  } else {
+    musicPlayer.unMute(); 
+
+    musicPlayer.playVideo();
+  }
+}
+
+function nextSong() {
+  currentMusicIndex++;
+  if (currentMusicIndex >= musicPlaylist.length) currentMusicIndex = 0;
+  loadAndPlay();
+}
+
+function prevSong() {
+  currentMusicIndex--;
+  if (currentMusicIndex < 0) currentMusicIndex = musicPlaylist.length - 1;
+  loadAndPlay();
+}
+
+function loadAndPlay() {
+  if (!musicPlayer) return;
+  const song = musicPlaylist[currentMusicIndex];
+  musicPlayer.loadVideoById(song.id);
+  updateMusicUI();
+
+}
+
+function startProgress() {
+  stopProgress();
+  progressInterval = setInterval(() => {
+    if (!musicPlayer || !musicPlayer.getDuration) return;
+    const current = musicPlayer.getCurrentTime();
+    const total = musicPlayer.getDuration();
+    if (total > 0) {
+      const percent = (current / total) * 100;
+      const bar = document.getElementById("mp-progress-bar");
+      if (bar) bar.style.width = percent + "%";
+    }
+  }, 1000);
+}
+
+function stopProgress() {
+  if (progressInterval) clearInterval(progressInterval);
+}
+
+window.seekMusic = function (event) {
+  if (!musicPlayer) return;
+  const container = document.querySelector(".mp-progress-container");
+  const width = container.clientWidth;
+  const clickX = event.offsetX;
+  const duration = musicPlayer.getDuration();
+  const seekTime = (clickX / width) * duration;
+  musicPlayer.seekTo(seekTime, true);
+};
 
 window.onload = () => fetchAnime(1);
 
