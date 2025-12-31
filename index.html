@@ -74,6 +74,23 @@
     </div>
 
     <main class="container">
+      <div
+        id="continue-watching-area"
+        style="display: none; margin-bottom: 40px"
+      >
+        <h3
+          style="
+            border-left: 5px solid #2ecc71;
+            padding-left: 10px;
+            margin-bottom: 15px;
+            color: #fff;
+          "
+        >
+          <i class="fas fa-play-circle"></i> Lanjutkan Menonton
+        </h3>
+        <div id="cw-grid" class="anime-grid"></div>
+        <hr style="border: 0; border-top: 1px solid #333; margin-top: 30px" />
+      </div>
       <h2>Daftar Anime Terbaru</h2>
 
       <div id="loading" class="loading">Memuat data...</div>
@@ -102,16 +119,30 @@
 
         <div class="detail-main">
           <h3 id="detail-title">Judul Anime</h3>
+          <div class="action-buttons">
+            <button id="btn-favorite" class="btn-fav">
+              <i class="far fa-heart"></i> Favorit
+            </button>
 
-          <button id="btn-favorite" class="btn-fav">
-            <i class="far fa-heart"></i> Tambah ke Favorit
-          </button>
+            <a id="btn-share-wa" class="btn-share wa" target="_blank">
+              <i class="fab fa-whatsapp"></i> Share WA
+            </a>
+
+            <a id="btn-share-copy" class="btn-share copy" onclick="copyLink()">
+              <i class="fas fa-link"></i> Copy Link
+            </a>
+          </div>
 
           <div id="detail-meta" class="meta-info"></div>
 
           <div class="episode-section">
             <div class="episode-header">
               <h4>Daftar Episode</h4>
+              <select
+                id="episode-range"
+                onchange="renderEpisodeListFromRange()"
+                style="display: none"
+              ></select>
               <button
                 id="btn-sort"
                 onclick="toggleSortOrder()"
@@ -160,6 +191,14 @@
       <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
         <h3 id="modal-title">Judul Anime</h3>
+        <div class="video-controls">
+          <button id="btn-video-prev" class="nav-vid-btn">
+            <i class="fas fa-step-backward"></i> Eps Sebelumnya
+          </button>
+          <button id="btn-video-next" class="nav-vid-btn">
+            Eps Selanjutnya <i class="fas fa-step-forward"></i>
+          </button>
+        </div>
         <div class="server-container">
           <span class="server-label"
             ><i class="fas fa-server"></i> Pilih Server:</span
@@ -170,7 +209,60 @@
         <div class="video-wrapper"></div>
       </div>
     </div>
+    <div id="toast-container"></div>
+    <button id="btn-scroll-top" onclick="scrollToTop()">
+      <i class="fas fa-arrow-up"></i>
+    </button>
+    <div id="music-toggle" onclick="toggleMusicPlayer()">
+      <i class="fas fa-music"></i>
+      <span class="pulse-ring"></span>
+    </div>
 
+    <div id="music-player" class="music-player-container">
+      <div class="mp-header">
+        <span>J-Music Radio</span>
+        <i class="fas fa-chevron-down" onclick="toggleMusicPlayer()"></i>
+      </div>
+
+      <div class="mp-info">
+        <img
+          id="mp-cover"
+          src="https://via.placeholder.com/100"
+          alt="Album Art"
+        />
+        <div class="mp-text">
+          <div id="mp-title" class="mp-title">Select Song</div>
+          <div id="mp-artist" class="mp-artist">...</div>
+        </div>
+      </div>
+
+      <div class="mp-controls">
+        <button onclick="prevSong()">
+          <i class="fas fa-step-backward"></i>
+        </button>
+        <button id="mp-play-btn" onclick="togglePlayMusic()" class="play-btn">
+          <i class="fas fa-play"></i>
+        </button>
+        <button onclick="nextSong()">
+          <i class="fas fa-step-forward"></i>
+        </button>
+      </div>
+
+      <div class="mp-progress-container" onclick="seekMusic(event)">
+        <div id="mp-progress-bar" class="mp-progress-bar"></div>
+      </div>
+
+      <div
+        id="youtube-player-hidden"
+        style="
+          width: 1px;
+          height: 1px;
+          opacity: 0;
+          position: absolute;
+          pointer-events: none;
+        "
+      ></div>
+    </div>
     <script src="script.js"></script>
   </body>
 </html>
