@@ -27,21 +27,21 @@ const STORAGE_KEY_FAV = "SANKA_FAVORITES_DATA";
 const STORAGE_KEY_HISTORY_LIST = "SANKA_HISTORY_LIST";
 const scrollBtn = document.getElementById("btn-scroll-top");
 const EPISODES_PER_PAGE = 50;
+
+// --- PERBAIKAN 1: DEFINISI VARIABEL GLOBAL (Supaya Tombol Sortir Jalan) ---
 let currentPage = 1;
 let currentView = "ongoing";
-
 let currentGenreSlug = "";
-
 let currentGenreName = "";
-
 let scheduleData = [];
 let isGenreLoaded = false;
 let playerInstance = null;
 let activeAnimeId = "";
 let activeAnimeImage = "";
+let currentEpisodes = []; // Wajib ada untuk sorting
+let isSortAscending = false; // Wajib ada untuk sorting
 
 const musicPlaylist = [
-
   {
     id: "jfKfPfyJRdk",
     title: "Lofi Girl Radio",
@@ -70,15 +70,14 @@ const musicPlaylist = [
 ];
 
 let currentMusicIndex = 0;
-let musicPlayer = null; 
-
+let musicPlayer = null;
 let isMusicPlaying = false;
 let progressInterval = null;
 
 async function fetchAnime(page = 1) {
   try {
     currentView = "ongoing";
-    showSkeleton(); 
+    showSkeleton();
 
     document.querySelector("h2").innerText = "Daftar Anime Terbaru (Ongoing)";
 
@@ -93,14 +92,13 @@ async function fetchAnime(page = 1) {
     const animeList = normalizeData(result);
 
     if (animeList && animeList.length > 0) {
-      renderAnime(animeList); 
+      renderAnime(animeList);
 
       currentPage = page;
       loadContinueWatching();
     } else {
       grid.innerHTML = "<p>Gagal memuat data.</p>";
     }
-
   } catch (error) {
     console.error(error);
     loading.innerHTML = `Error: ${error.message}`;
@@ -352,7 +350,9 @@ async function showAnimeDetail(animeId, title, imageTemp) {
 
     if (data.thumb || data.poster) detailImage.src = data.thumb || data.poster;
 
+    // --- PERBAIKAN 2: RESET SORTING DAN PANGGIL UPDATE UI ---
     isSortAscending = false;
+    updateSortButtonUI(); // Tambahan agar tombol reset
     updateEpisodeRangeUI();
     renderEpisodeListFromRange();
   } catch (error) {
@@ -385,6 +385,8 @@ async function findRelatedSeasons(fullTitle, currentId) {
     seasonContainer.style.display = "none";
   }
 }
+
+// --- INI FUNGSI YANG HILANG SEBELUMNYA (Saya kembalikan) ---
 function renderSeasonDropdown(list, currentId) {
   seasonDropdown.innerHTML = "";
   list.sort((a, b) => (a.title || a.name).localeCompare(b.title || b.name));
@@ -903,14 +905,13 @@ window.toggleSortOrder = function () {
 };
 
 function loadContinueWatching() {
-
   if (currentView !== "ongoing" || currentPage !== 1) {
     const area = document.getElementById("continue-watching-area");
     if (area) area.style.display = "none";
     return;
   }
 
-  const list = getHistoryList(); 
+  const list = getHistoryList();
 
   const container = document.getElementById("continue-watching-area");
   const gridCW = document.getElementById("cw-grid");
@@ -930,7 +931,7 @@ function loadContinueWatching() {
   recentList.forEach((anime) => {
     const card = document.createElement("div");
     card.className = "anime-card";
-    card.style.border = "1px solid #2ecc71"; 
+    card.style.border = "1px solid #2ecc71";
 
     card.innerHTML = `
       <div style="position: relative;">
@@ -947,7 +948,6 @@ function loadContinueWatching() {
       </div>`;
 
     card.onclick = async () => {
-
       if (typeof showToast === "function")
         showToast("Memuat video terakhir...", "info");
       activeAnimeId = anime.id;
@@ -955,7 +955,6 @@ function loadContinueWatching() {
       markAsWatched(anime.id, anime.lastEp, anime.title, anime.image);
 
       try {
-
         const response = await fetch(`${BASE_URL}/anime/anime/${anime.id}`);
         const result = await response.json();
         const data = result.data || {};
@@ -969,7 +968,6 @@ function loadContinueWatching() {
         if (episodeKey) {
           currentEpisodes = data[episodeKey];
         } else {
-
           for (const k of keys) {
             if (
               !k.toLowerCase().includes("genre") &&
@@ -1050,7 +1048,6 @@ function setupVideoNav(currentSlug) {
 
     prevBtn.disabled = false;
     prevBtn.onclick = () => {
-
       markAsWatched(activeAnimeId, prevId, prevEp.title, activeAnimeImage);
       fetchVideoReal(prevId, prevEp.title);
     };
@@ -1065,7 +1062,6 @@ function setupVideoNav(currentSlug) {
 
     nextBtn.disabled = false;
     nextBtn.onclick = () => {
-
       markAsWatched(activeAnimeId, nextId, nextEp.title, activeAnimeImage);
       fetchVideoReal(nextId, nextEp.title);
     };
@@ -1090,7 +1086,6 @@ window.onscroll = function () {
 };
 
 function toggleScrollButton() {
-
   if (
     document.body.scrollTop > 300 ||
     document.documentElement.scrollTop > 300
@@ -1102,7 +1097,6 @@ function toggleScrollButton() {
 }
 
 function scrollToTop() {
-
   window.scrollTo({
     top: 0,
     behavior: "smooth",
@@ -1115,7 +1109,7 @@ function showSkeleton() {
 
   if (loadingText) loadingText.style.display = "none";
 
-  grid.innerHTML = ""; 
+  grid.innerHTML = "";
 
   const skeletonHTML = `
     <div class="anime-card skeleton-card">
@@ -1195,19 +1189,25 @@ function updateEpisodeRangeUI() {
 }
 
 function renderEpisodeListFromRange() {
-
   const title = document.getElementById("detail-title").innerText;
 
   renderEpisodeList(activeAnimeId, title, activeAnimeImage);
 }
 
-window.toggleSortOrder = function () {
-  isSortAscending = !isSortAscending;
-  updateSortButtonUI();
+// --- PERBAIKAN 3: INI FUNGSI YANG SEBELUMNYA HILANG DAN BIKIN ERROR ---
+function updateSortButtonUI() {
+  const btn = document.getElementById("btn-sort");
+  if (!btn) return;
 
-  updateEpisodeRangeUI();
-  renderEpisodeListFromRange();
-};
+  if (isSortAscending) {
+    // Jika Ascending (1-50), tombol tawarkan "Ke Terbaru"
+    btn.innerHTML =
+      '<i class="fas fa-sort-amount-down-alt"></i> Ke Episode Terbaru';
+  } else {
+    // Jika Descending (100-50), tombol tawarkan "Ke Episode 1"
+    btn.innerHTML = '<i class="fas fa-sort-amount-down"></i> Ke Episode 1';
+  }
+}
 
 function renderEpisodeList(animeId, title, image) {
   const container = document.getElementById("episode-list");
@@ -1218,7 +1218,6 @@ function renderEpisodeList(animeId, title, image) {
   container.innerHTML = "";
 
   if (currentEpisodes.length > 0) {
-
     let episodesToSort = [...currentEpisodes];
     episodesToSort.sort((a, b) => {
       const getEpNumber = (str) => {
@@ -1227,8 +1226,7 @@ function renderEpisodeList(animeId, title, image) {
       };
       const numA = getEpNumber(a.title);
       const numB = getEpNumber(b.title);
-      return isSortAscending ? numA - numB : numB - numA; 
-
+      return isSortAscending ? numA - numB : numB - numA;
     });
 
     const pageIndex = parseInt(rangeSelect.value) || 0;
@@ -1272,7 +1270,6 @@ function renderEpisodeList(animeId, title, image) {
             `;
 
       btn.onclick = () => {
-
         markAsWatched(activeAnimeId, epId, title, activeAnimeImage);
         btn.classList.add("watched");
         btn.querySelector("i").className = "fas fa-check-circle";
@@ -1288,7 +1285,6 @@ function renderEpisodeList(animeId, title, image) {
 }
 
 document.addEventListener("keydown", (e) => {
-
   const modal = document.getElementById("video-modal");
   if (!modal || modal.style.display !== "flex") return;
 
@@ -1298,38 +1294,35 @@ document.addEventListener("keydown", (e) => {
   if (tag === "INPUT" || tag === "TEXTAREA") return;
 
   switch (e.key) {
-    case " ": 
+    case " ":
 
-    case "k": 
+    case "k":
+      e.preventDefault();
 
-      e.preventDefault(); 
-
-      playerInstance.togglePlay(); 
+      playerInstance.togglePlay();
 
       showToast(playerInstance.playing ? "Pause ⏸️" : "Play ▶️", "info");
       break;
 
-    case "f": 
+    case "f":
 
     case "F":
       playerInstance.fullscreen.toggle();
       break;
 
-    case "ArrowRight": 
-
-      playerInstance.forward(10); 
+    case "ArrowRight":
+      playerInstance.forward(10);
 
       showToast("Maju 10s ⏩", "info");
       break;
 
-    case "ArrowLeft": 
-
-      playerInstance.rewind(10); 
+    case "ArrowLeft":
+      playerInstance.rewind(10);
 
       showToast("Mundur 10s ⏪", "info");
       break;
 
-    case "m": 
+    case "m":
 
     case "M":
       playerInstance.muted = !playerInstance.muted;
@@ -1340,7 +1333,7 @@ document.addEventListener("keydown", (e) => {
 
 function onYouTubeIframeAPIReady() {
   musicPlayer = new YT.Player("youtube-player-hidden", {
-    height: "1", 
+    height: "1",
 
     width: "1",
     videoId: musicPlaylist[0].id,
@@ -1348,20 +1341,17 @@ function onYouTubeIframeAPIReady() {
       playsinline: 1,
       controls: 0,
       disablekb: 1,
-      origin: window.location.origin, 
-
+      origin: window.location.origin,
     },
     events: {
       onReady: onMusicPlayerReady,
       onStateChange: onMusicStateChange,
-      onError: onMusicError, 
-
+      onError: onMusicError,
     },
   });
 }
 
 function onMusicPlayerReady(event) {
-
   event.target.setVolume(100);
   event.target.unMute();
 
@@ -1369,7 +1359,6 @@ function onMusicPlayerReady(event) {
 }
 
 function onMusicStateChange(event) {
-
   if (event.data === YT.PlayerState.PLAYING) {
     isMusicPlaying = true;
     document.getElementById("mp-play-btn").innerHTML =
@@ -1381,8 +1370,7 @@ function onMusicStateChange(event) {
       '<i class="fas fa-play"></i>';
     stopProgress();
   } else if (event.data === YT.PlayerState.ENDED) {
-    nextSong(); 
-
+    nextSong();
   }
 }
 
@@ -1398,7 +1386,6 @@ function onMusicError(event) {
     "Lagu ini dibatasi oleh YouTube. Silakan pilih lagu lain.",
     "error"
   );
-
 }
 
 if (!document.getElementById("yt-api-script")) {
@@ -1437,7 +1424,7 @@ function togglePlayMusic() {
   if (isMusicPlaying) {
     musicPlayer.pauseVideo();
   } else {
-    musicPlayer.unMute(); 
+    musicPlayer.unMute();
 
     musicPlayer.playVideo();
   }
@@ -1460,7 +1447,6 @@ function loadAndPlay() {
   const song = musicPlaylist[currentMusicIndex];
   musicPlayer.loadVideoById(song.id);
   updateMusicUI();
-
 }
 
 function startProgress() {
@@ -1492,4 +1478,3 @@ window.seekMusic = function (event) {
 };
 
 window.onload = () => fetchAnime(1);
-
