@@ -25,6 +25,7 @@ const scheduleListContainer = document.getElementById("schedule-list");
 const STORAGE_KEY_WATCHED = "SANKA_WATCHED_HISTORY";
 const STORAGE_KEY_FAV = "SANKA_FAVORITES_DATA";
 const STORAGE_KEY_HISTORY_LIST = "SANKA_HISTORY_LIST";
+const STORAGE_KEY_PROGRESS = "SANKA_WATCH_PROGRESS";
 const scrollBtn = document.getElementById("btn-scroll-top");
 const EPISODES_PER_PAGE = 50;
 
@@ -439,8 +440,9 @@ async function fetchVideoReal(episodeSlug, fullTitle) {
     const servers = extractAllServers(result.data);
 
     if (servers.length > 0) {
-      if (serverListDiv) renderServerButtons(servers);
-      playVideoSource(servers[0].url);
+      // --- UPDATE DI SINI: Kirim episodeSlug ke fungsi render & play ---
+      if (serverListDiv) renderServerButtons(servers, episodeSlug);
+      playVideoSource(servers[0].url, episodeSlug); // <-- Tambah parameter episodeSlug
 
       setTimeout(() => {
         const f = document.querySelector(".server-btn");
@@ -546,7 +548,7 @@ function isValidVideoUrl(url) {
   );
 }
 
-function renderServerButtons(servers) {
+function renderServerButtons(servers, episodeSlug) {
   const container = document.getElementById("server-list");
   if (!container) return;
   container.innerHTML = "";
@@ -555,7 +557,8 @@ function renderServerButtons(servers) {
     btn.className = "server-btn";
     btn.innerText = server.name;
     btn.onclick = () => {
-      playVideoSource(server.url);
+      // Kirim episodeSlug saat ganti server
+      playVideoSource(server.url, episodeSlug);
       document
         .querySelectorAll(".server-btn")
         .forEach((b) => b.classList.remove("active"));
@@ -565,16 +568,22 @@ function renderServerButtons(servers) {
   });
 }
 
-function playVideoSource(streamUrl) {
+function playVideoSource(streamUrl, episodeId) {
   const wrapper = document.querySelector(".video-wrapper");
+
+  // Hapus player lama
   if (playerInstance) {
     playerInstance.destroy();
     playerInstance = null;
   }
+
   wrapper.innerHTML = "";
   const isMp4 = streamUrl.includes(".mp4");
+
   if (isMp4) {
+    // === LOGIKA VIDEO PLAYER (MP4) DENGAN RESUME ===
     wrapper.innerHTML = `<video id="player" playsinline controls autoplay><source src="${streamUrl}" type="video/mp4" /></video>`;
+
     if (typeof Plyr !== "undefined") {
       playerInstance = new Plyr("#player", {
         controls: [
@@ -582,17 +591,66 @@ function playVideoSource(streamUrl) {
           "play",
           "progress",
           "current-time",
+          "duration",
           "mute",
           "volume",
-          "fullscreen",
+          "captions",
           "settings",
+          "pip",
+          "airplay",
+          "fullscreen",
         ],
         autoplay: true,
       });
+
+      // 1. SAAT PLAYER SIAP (READY)
+      playerInstance.on("ready", () => {
+        // Ambil waktu terakhir dari LocalStorage
+        const lastTime = getVideoProgress(episodeId);
+
+        // Jika ada history (> 5 detik) dan belum tamat, lompat ke sana
+        if (lastTime > 5) {
+          playerInstance.currentTime = lastTime;
+          // Opsional: Kasih notif kecil
+          showToast(`Lanjut menonton dari ${formatTime(lastTime)}`, "success");
+        }
+        playerInstance.play();
+      });
+
+      // 2. SAAT VIDEO DIPUTAR (TIMEUPDATE)
+      // Simpan waktu setiap 2 detik (biar gak spam storage)
+      let lastSave = 0;
+      playerInstance.on("timeupdate", (event) => {
+        const now = playerInstance.currentTime;
+        // Simpan setiap pergerakan 5 detik atau saat user pause
+        if (Math.abs(now - lastSave) > 5) {
+          saveVideoProgress(episodeId, now);
+          lastSave = now;
+        }
+      });
+
+      // 3. SAAT PAUSE / BERHENTI
+      playerInstance.on("pause", () => {
+        saveVideoProgress(episodeId, playerInstance.currentTime);
+      });
+
+      // 4. SAAT SELESAI
+      playerInstance.on("ended", () => {
+        // Hapus progress kalau sudah tamat biar nanti mulai dari awal lagi
+        saveVideoProgress(episodeId, 0);
+      });
     }
   } else {
+    // === UNTUK IFRAME BIASA (TIDAK BISA RESUME) ===
     wrapper.innerHTML = `<iframe src="${streamUrl}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
   }
+}
+
+// Helper kecil untuk format waktu (Detik -> 12:05)
+function formatTime(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = Math.floor(seconds % 60);
+  return `${m}:${s < 10 ? "0" : ""}${s}`;
 }
 
 async function openGenreModal() {
@@ -1467,6 +1525,19 @@ function stopProgress() {
   if (progressInterval) clearInterval(progressInterval);
 }
 
+function saveVideoProgress(episodeId, time) {
+  let progressData =
+    JSON.parse(localStorage.getItem(STORAGE_KEY_PROGRESS)) || {};
+  progressData[episodeId] = time;
+  localStorage.setItem(STORAGE_KEY_PROGRESS, JSON.stringify(progressData));
+}
+
+function getVideoProgress(episodeId) {
+  let progressData =
+    JSON.parse(localStorage.getItem(STORAGE_KEY_PROGRESS)) || {};
+  return progressData[episodeId] || 0;
+}
+
 window.seekMusic = function (event) {
   if (!musicPlayer) return;
   const container = document.querySelector(".mp-progress-container");
@@ -1478,4 +1549,3 @@ window.seekMusic = function (event) {
 };
 
 window.onload = () => fetchAnime(1);
-
