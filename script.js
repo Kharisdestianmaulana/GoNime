@@ -732,6 +732,7 @@ async function fetchVideoReal(episodeSlug, fullTitle) {
   videoModal.style.display = "flex";
   modalTitle.innerText = `Putar: ${fullTitle}`;
   setupVideoNav(episodeSlug);
+  renderVideoEpisodeBar(episodeSlug);
   const wrapper = document.querySelector(".video-wrapper");
   const serverListDiv = document.getElementById("server-list");
 
@@ -1443,6 +1444,70 @@ function toggleScrollButton() {
 window.scrollToTop = function () {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
+
+function renderVideoEpisodeBar(currentSlug) {
+  const container = document.getElementById("video-episode-numbers");
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!currentEpisodes || currentEpisodes.length === 0) {
+    container.innerHTML =
+      "<span style='color:#666; font-size:0.8rem;'>List episode tidak tersedia</span>";
+    return;
+  }
+
+  // 1. Kita urutkan episode dari 1 sampai Terakhir (Ascending)
+  // Biar tampilannya rapi: 1, 2, 3, 4...
+  let sortedEps = [...currentEpisodes].sort((a, b) => {
+    const getEpNum = (t) => {
+      const m = t.match(/Episode\s+(\d+)/i) || t.match(/(\d+)/);
+      return m ? parseFloat(m[1]) : 0;
+    };
+    return getEpNum(a.title) - getEpNum(b.title);
+  });
+
+  // 2. Render Tombol
+  sortedEps.forEach((ep) => {
+    let epId = getCleanId(ep); // Pakai helper yang sudah ada
+
+    // Ambil Angka Saja untuk label (Misal "Episode 1" jadi "1")
+    let epLabel = "?";
+    const match = ep.title.match(/Episode\s+(\d+)/i) || ep.title.match(/(\d+)/);
+    if (match) epLabel = match[1];
+    else epLabel = ep.title.substring(0, 3); // Fallback kalau gak ada angka
+
+    const btn = document.createElement("button");
+    btn.className = `ep-num-btn ${epId === currentSlug ? "active" : ""}`;
+    btn.innerText = epLabel;
+    btn.title = ep.title; // Tooltip judul lengkap saat hover
+
+    btn.onclick = () => {
+      // Panggil fungsi play yang sudah ada
+      markAsWatched(activeAnimeId, epId, ep.title, activeAnimeImage);
+      fetchVideoReal(epId, ep.title);
+
+      // Update tampilan aktif
+      document
+        .querySelectorAll(".ep-num-btn")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    };
+
+    container.appendChild(btn);
+  });
+
+  // Auto scroll ke tombol aktif biar user gak perlu scroll nyari
+  setTimeout(() => {
+    const activeBtn = container.querySelector(".ep-num-btn.active");
+    if (activeBtn) {
+      activeBtn.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+    }
+  }, 500);
+}
 
 // --- INIT ---
 window.onload = () => fetchAnime(1);
