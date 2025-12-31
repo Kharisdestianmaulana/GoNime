@@ -29,7 +29,7 @@ const scrollBtn = document.getElementById("btn-scroll-top");
 const STORAGE_KEY_WATCHED = "SANKA_WATCHED_HISTORY";
 const STORAGE_KEY_FAV = "SANKA_FAVORITES_DATA";
 const STORAGE_KEY_HISTORY_LIST = "SANKA_HISTORY_LIST";
-const STORAGE_KEY_PROGRESS = "SANKA_WATCH_PROGRESS"; // Key Baru untuk Resume Playback
+const STORAGE_KEY_PROGRESS = "SANKA_WATCH_PROGRESS";
 
 const EPISODES_PER_PAGE = 50;
 
@@ -205,11 +205,8 @@ function normalizeData(result) {
 function renderAnime(animeList) {
   grid.innerHTML = "";
   animeList.forEach((anime) => {
+    // Ambil ID Anime
     const rawId = anime.animeId || anime.slug || anime.id || anime.endpoint;
-    const title = anime.title || anime.name;
-    const image = anime.poster || anime.thumb || anime.image;
-    const episode = anime.episode || anime.current_episode || "?";
-
     let cleanId = rawId;
     if (cleanId && cleanId.includes("/"))
       cleanId = cleanId
@@ -217,14 +214,52 @@ function renderAnime(animeList) {
         .filter((p) => p.length > 0)
         .pop();
 
+    // Data Utama
+    const title = anime.title || anime.name;
+    const image = anime.poster || anime.thumb || anime.image;
+
+    // --- PERBAIKAN DATA META ---
+    // Cek episode, kalau kosong tulis 'Update' atau angka
+    let episode = anime.episode || anime.current_episode || "Ongoing";
+    // Bersihkan teks episode biar cuma angkanya aja (Opsional)
+    episode = episode.replace("Episode", "Eps").replace("Ep", "Eps");
+
+    // Cek Rating (Score) - Kalo API ngasih data score
+    const rating = anime.score || anime.rating || null;
+
+    // Cek Tipe/Durasi (Jarang ada di list home, tapi kita siapkan)
+    const type = anime.type || "TV";
+
     const card = document.createElement("div");
     card.className = "anime-card";
+
+    // Kita susun HTML Card-nya lebih rapi
     card.innerHTML = `
-        <img src="${image}" alt="${title}">
+        <div style="position: relative;">
+            <img src="${image}" alt="${title}" loading="lazy">
+            <div style="position: absolute; top: 10px; left: 10px; background: var(--primary); color: #fff; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: bold;">
+                ${type}
+            </div>
+        </div>
         <div class="card-info">
-            <div class="card-title">${title}</div>
-            <div style="font-size: 0.8rem; color: #ccc; margin-top:5px;">${episode}</div>
+            <div class="card-title" title="${title}">${title}</div>
+            
+            <div class="card-meta">
+                <span class="meta-badge ep">
+                    <i class="fas fa-play-circle"></i> ${episode}
+                </span>
+
+                ${
+                  rating
+                    ? `
+                <span class="meta-badge rating">
+                    <i class="fas fa-star"></i> ${rating}
+                </span>`
+                    : ""
+                }
+            </div>
         </div>`;
+
     if (cleanId) card.onclick = () => showAnimeDetail(cleanId, title, image);
     grid.appendChild(card);
   });
@@ -512,12 +547,11 @@ function renderEpisodeList(animeId, title, image) {
 }
 
 // =========================================
-// 5. GENRE, SCHEDULE, & SEASON (PENTING: JANGAN DIHAPUS)
+// 5. GENRE, SCHEDULE, & SEASON (PERBAIKAN GLOBAL)
 // =========================================
 
 // --- GENRE ---
 window.openGenreModal = async function () {
-  // Pastikan pakai window. agar global
   genreModal.style.display = "flex";
   if (isGenreLoaded) return;
   genreListContainer.innerHTML = "<p>Loading genre...</p>";
@@ -725,14 +759,15 @@ function renderSeasonDropdown(list, currentId) {
 }
 
 // =========================================
-// 6. VIDEO PLAYER (AUTO LANDSCAPE + RESUME)
+// 6. VIDEO PLAYER (AUTO LANDSCAPE + RESUME + EPISODE BAR)
 // =========================================
 
 async function fetchVideoReal(episodeSlug, fullTitle) {
   videoModal.style.display = "flex";
   modalTitle.innerText = `Putar: ${fullTitle}`;
   setupVideoNav(episodeSlug);
-  renderVideoEpisodeBar(episodeSlug);
+  renderVideoEpisodeBar(episodeSlug); // <-- INI YANG PENTING
+
   const wrapper = document.querySelector(".video-wrapper");
   const serverListDiv = document.getElementById("server-list");
 
@@ -767,6 +802,60 @@ async function fetchVideoReal(episodeSlug, fullTitle) {
     wrapper.innerHTML = `<div style="text-align:center; padding:20px; color:#ff4757;">Error: ${e.message}</div>`;
     if (serverListDiv) serverListDiv.innerHTML = "";
   }
+}
+
+function renderVideoEpisodeBar(currentSlug) {
+  const container = document.getElementById("video-episode-numbers");
+  if (!container) return;
+  container.innerHTML = "";
+
+  if (!currentEpisodes || currentEpisodes.length === 0) {
+    container.innerHTML =
+      "<span style='color:#666; font-size:0.8rem;'>List episode tidak tersedia</span>";
+    return;
+  }
+
+  let sortedEps = [...currentEpisodes].sort((a, b) => {
+    const getEpNum = (t) => {
+      const m = t.match(/Episode\s+(\d+)/i) || t.match(/(\d+)/);
+      return m ? parseFloat(m[1]) : 0;
+    };
+    return getEpNum(a.title) - getEpNum(b.title);
+  });
+
+  sortedEps.forEach((ep) => {
+    let epId = getCleanId(ep);
+    let epLabel = "?";
+    const match = ep.title.match(/Episode\s+(\d+)/i) || ep.title.match(/(\d+)/);
+    if (match) epLabel = match[1];
+    else epLabel = ep.title.substring(0, 3);
+
+    const btn = document.createElement("button");
+    btn.className = `ep-num-btn ${epId === currentSlug ? "active" : ""}`;
+    btn.innerText = epLabel;
+    btn.title = ep.title;
+
+    btn.onclick = () => {
+      markAsWatched(activeAnimeId, epId, ep.title, activeAnimeImage);
+      fetchVideoReal(epId, ep.title);
+      document
+        .querySelectorAll(".ep-num-btn")
+        .forEach((b) => b.classList.remove("active"));
+      btn.classList.add("active");
+    };
+    container.appendChild(btn);
+  });
+
+  setTimeout(() => {
+    const activeBtn = container.querySelector(".ep-num-btn.active");
+    if (activeBtn) {
+      activeBtn.scrollIntoView({
+        behavior: "smooth",
+        block: "center",
+        inline: "center",
+      });
+    }
+  }, 500);
 }
 
 function extractAllServers(data) {
@@ -1445,70 +1534,5 @@ window.scrollToTop = function () {
   window.scrollTo({ top: 0, behavior: "smooth" });
 };
 
-function renderVideoEpisodeBar(currentSlug) {
-  const container = document.getElementById("video-episode-numbers");
-  if (!container) return;
-  container.innerHTML = "";
-
-  if (!currentEpisodes || currentEpisodes.length === 0) {
-    container.innerHTML =
-      "<span style='color:#666; font-size:0.8rem;'>List episode tidak tersedia</span>";
-    return;
-  }
-
-  // 1. Kita urutkan episode dari 1 sampai Terakhir (Ascending)
-  // Biar tampilannya rapi: 1, 2, 3, 4...
-  let sortedEps = [...currentEpisodes].sort((a, b) => {
-    const getEpNum = (t) => {
-      const m = t.match(/Episode\s+(\d+)/i) || t.match(/(\d+)/);
-      return m ? parseFloat(m[1]) : 0;
-    };
-    return getEpNum(a.title) - getEpNum(b.title);
-  });
-
-  // 2. Render Tombol
-  sortedEps.forEach((ep) => {
-    let epId = getCleanId(ep); // Pakai helper yang sudah ada
-
-    // Ambil Angka Saja untuk label (Misal "Episode 1" jadi "1")
-    let epLabel = "?";
-    const match = ep.title.match(/Episode\s+(\d+)/i) || ep.title.match(/(\d+)/);
-    if (match) epLabel = match[1];
-    else epLabel = ep.title.substring(0, 3); // Fallback kalau gak ada angka
-
-    const btn = document.createElement("button");
-    btn.className = `ep-num-btn ${epId === currentSlug ? "active" : ""}`;
-    btn.innerText = epLabel;
-    btn.title = ep.title; // Tooltip judul lengkap saat hover
-
-    btn.onclick = () => {
-      // Panggil fungsi play yang sudah ada
-      markAsWatched(activeAnimeId, epId, ep.title, activeAnimeImage);
-      fetchVideoReal(epId, ep.title);
-
-      // Update tampilan aktif
-      document
-        .querySelectorAll(".ep-num-btn")
-        .forEach((b) => b.classList.remove("active"));
-      btn.classList.add("active");
-    };
-
-    container.appendChild(btn);
-  });
-
-  // Auto scroll ke tombol aktif biar user gak perlu scroll nyari
-  setTimeout(() => {
-    const activeBtn = container.querySelector(".ep-num-btn.active");
-    if (activeBtn) {
-      activeBtn.scrollIntoView({
-        behavior: "smooth",
-        block: "center",
-        inline: "center",
-      });
-    }
-  }, 500);
-}
-
 // --- INIT ---
 window.onload = () => fetchAnime(1);
-
