@@ -1478,3 +1478,4 @@ window.seekMusic = function (event) {
 };
 
 window.onload = () => fetchAnime(1);
+
