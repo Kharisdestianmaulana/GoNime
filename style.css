@@ -17,7 +17,6 @@ body {
   color: var(--text);
 }
 
-/* Navbar */
 .navbar {
   display: flex;
   justify-content: space-between;
@@ -61,7 +60,6 @@ body {
   cursor: pointer;
 }
 
-/* Grid Layout */
 .container {
   padding: 20px 5%;
 }
@@ -78,7 +76,6 @@ h2 {
   gap: 20px;
 }
 
-/* Kartu Anime */
 .anime-card {
   background: var(--dark);
   border-radius: 8px;
@@ -110,7 +107,6 @@ h2 {
   text-overflow: ellipsis;
 }
 
-/* Loading */
 .loading {
   text-align: center;
   margin-top: 50px;
@@ -118,7 +114,6 @@ h2 {
   color: #888;
 }
 
-/* Modal Video */
 .modal {
   display: none;
   position: fixed;
@@ -238,7 +233,6 @@ h2 {
   color: white;
 }
 
-/* ===== LAYOUT MODAL DETAIL (DIPERBAIKI) ===== */
 .detail-layout {
   display: flex;
   flex-direction: row;
@@ -254,7 +248,6 @@ h2 {
   position: relative;
 }
 
-/* Overlay dekoratif */
 .detail-layout::before {
   content: "";
   position: absolute;
@@ -270,7 +263,6 @@ h2 {
   pointer-events: none;
 }
 
-/* ===== SIDEBAR KIRI (Cover + Synopsis) ===== */
 .detail-sidebar {
   width: 35%;
   min-width: 280px;
@@ -297,7 +289,6 @@ h2 {
     0 0 0 1px rgba(255, 71, 87, 0.5);
 }
 
-/* Synopsis Box - Modern & Clean */
 .synopsis-area {
   background: rgba(255, 255, 255, 0.07);
   padding: 20px;
@@ -318,7 +309,6 @@ h2 {
   border-left-width: 6px;
 }
 
-/* Scrollbar untuk Synopsis */
 .synopsis-area::-webkit-scrollbar {
   width: 6px;
 }
@@ -356,7 +346,6 @@ h2 {
   filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.3));
 }
 
-/* ===== KONTEN KANAN (Info + Episodes) ===== */
 .detail-right {
   flex: 2;
   min-width: 300px;
@@ -365,7 +354,6 @@ h2 {
   padding-right: 10px;
 }
 
-/* Scrollbar untuk Detail Right */
 .detail-right::-webkit-scrollbar {
   width: 8px;
 }
@@ -413,7 +401,6 @@ h2 {
   overflow-y: auto;
 }
 
-/* ===== EPISODE GRID - Modern List Style ===== */
 .episode-grid {
   display: flex;
   flex-direction: column;
@@ -515,7 +502,6 @@ h2 {
   color: white;
 }
 
-/* Tombol Love di Modal Detail */
 .title-row {
   display: flex;
   justify-content: space-between;
@@ -940,13 +926,12 @@ h2 {
 }
 
 .episode-section h4 {
-  margin-bottom: 0; /* Reset margin lama */
+  margin-bottom: 0; 
   border-left: 4px solid var(--primary);
   padding-left: 10px;
   color: white;
 }
 
-/* Style Tombol Sortir */
 .sort-btn {
   background: transparent;
   border: 1px solid #555;
@@ -971,7 +956,6 @@ h2 {
   color: var(--primary);
 }
 
-/* ===== RESPONSIVE MOBILE ===== */
 @media (max-width: 768px) {
   .detail-layout {
     flex-direction: column;
@@ -1053,3 +1037,4 @@ h2 {
     height: 250px;
   }
 }
+
