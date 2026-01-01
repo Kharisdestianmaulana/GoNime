@@ -13,8 +13,18 @@
     />
   </head>
   <body>
+    <div id="splash-screen">
+      <div class="splash-content">
+        <h1 class="logo-splash">Go<span>Nime</span></h1>
+        <div class="loading-bar"></div>
+      </div>
+    </div>
     <nav class="navbar">
-      <div class="logo" onclick="fetchAnime(1)" style="cursor: pointer">
+      <div
+        class="logo"
+        onclick="window.location.reload()"
+        style="cursor: pointer"
+      >
         Go<span>Nime</span>
       </div>
 
@@ -60,17 +70,28 @@
       </button>
     </div>
 
-    <div class="mobile-bottom-nav">
-      <div onclick="fetchAnime(1)"><i class="fas fa-home"></i>Home</div>
-      <div onclick="showFavorites()"><i class="fas fa-heart"></i>Favorit</div>
-      <div onclick="showHistory()"><i class="fas fa-history"></i>Riwayat</div>
-      <div onclick="openScheduleModal()">
-        <i class="fas fa-calendar-alt"></i>Jadwal
+    <div class="hero-container">
+      <div class="hero-slider" id="hero-slider">
+        <div
+          style="
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100%;
+            color: #555;
+          "
+        >
+          Memuat Highlight...
+        </div>
       </div>
-      <div onclick="fetchCompletedAnime(1)">
-        <i class="fas fa-check-circle"></i>Tamat
+      <button class="hero-nav prev" onclick="moveHeroSlide(-1)">
+        &#10094;
+      </button>
+      <button class="hero-nav next" onclick="moveHeroSlide(1)">&#10095;</button>
+      <div class="hero-dots" id="hero-dots"></div>
+      <div class="scroll-indicator" onclick="scrollToContent()">
+        <i class="fas fa-chevron-down"></i>
       </div>
-      <div onclick="openGenreModal()"><i class="fas fa-tags"></i>Genre</div>
     </div>
 
     <main class="container">
@@ -91,17 +112,73 @@
         <div id="cw-grid" class="anime-grid"></div>
         <hr style="border: 0; border-top: 1px solid #333; margin-top: 30px" />
       </div>
-      <h2>Daftar Anime Terbaru</h2>
 
-      <div id="loading" class="loading">Memuat data...</div>
+      <div id="main-content-area">
+        <div id="home-rows-container">
+          <div class="category-row">
+            <div class="row-header">
+              <h3>🔥 Sedang Hangat (Ongoing)</h3>
+              <button class="see-all-btn" onclick="switchToGridView('ongoing')">
+                Lihat Semua
+              </button>
+            </div>
+            <div id="row-ongoing" class="horizontal-scroll">
+              <div class="loading-row">Memuat...</div>
+            </div>
+          </div>
+          <div class="category-row">
+            <div class="row-header">
+              <h3>⚔️ Anime Action Pilihan</h3>
+              <button
+                class="see-all-btn"
+                onclick="fetchAnimeByGenre('action', 'Action', 1)"
+              >
+                Lihat Semua
+              </button>
+            </div>
+            <div id="row-action" class="horizontal-scroll">
+              <div class="loading-row">Memuat...</div>
+            </div>
+          </div>
+          <div class="category-row">
+            <div class="row-header">
+              <h3>💖 Romance Terbaik</h3>
+              <button
+                class="see-all-btn"
+                onclick="fetchAnimeByGenre('romance', 'Romance', 1)"
+              >
+                Lihat Semua
+              </button>
+            </div>
+            <div id="row-romance" class="horizontal-scroll">
+              <div class="loading-row">Memuat...</div>
+            </div>
+          </div>
+        </div>
 
-      <div id="anime-grid" class="anime-grid"></div>
+        <div id="grid-view-container" style="display: none">
+          <div class="grid-header-row">
+            <button class="back-home-btn" onclick="backToHome()">
+              <i class="fas fa-arrow-left"></i> Kembali
+            </button>
+            <h2 id="grid-title" style="border: none; padding: 0; margin: 0">
+              Hasil Pencarian
+            </h2>
+          </div>
 
-      <div class="pagination-container">
-        <button id="btn-prev" onclick="changePage(-1)">Previous</button>
-        <span id="page-info">Halaman 1</span>
-        <button id="btn-next" onclick="changePage(1)">Next</button>
+          <div id="loading" class="loading" style="display: none">
+            Memuat data...
+          </div>
+          <div id="anime-grid" class="anime-grid"></div>
+
+          <div class="pagination-container">
+            <button id="btn-prev" onclick="changePage(-1)">Previous</button>
+            <span id="page-info">Halaman 1</span>
+            <button id="btn-next" onclick="changePage(1)">Next</button>
+          </div>
+        </div>
       </div>
+
       <div class="promo-section">
         <a
           href="https://naniwatch.vercel.app/"
@@ -117,34 +194,27 @@
     <div id="detail-modal" class="modal">
       <div class="modal-content detail-layout">
         <span class="close-btn" onclick="closeDetail()">&times;</span>
-
         <div class="detail-sidebar">
           <img id="detail-image" src="" alt="Anime Cover" />
-
           <div class="synopsis-area">
             <h4><i class="fas fa-book-open"></i> Sinopsis</h4>
             <p id="detail-synopsis">Memuat...</p>
           </div>
         </div>
-
         <div class="detail-main">
           <h3 id="detail-title">Judul Anime</h3>
           <div class="action-buttons">
             <button id="btn-favorite" class="btn-fav">
               <i class="far fa-heart"></i> Favorit
             </button>
-
             <a id="btn-share-wa" class="btn-share wa" target="_blank">
               <i class="fab fa-whatsapp"></i> Share WA
             </a>
-
             <a id="btn-share-copy" class="btn-share copy" onclick="copyLink()">
               <i class="fas fa-link"></i> Copy Link
             </a>
           </div>
-
           <div id="detail-meta" class="meta-info"></div>
-
           <div class="episode-section">
             <div class="episode-header">
               <h4>Daftar Episode</h4>
@@ -161,7 +231,6 @@
                 <i class="fas fa-sort-amount-down"></i> Terbaru
               </button>
             </div>
-
             <div
               id="season-container"
               style="display: none; margin-bottom: 10px"
@@ -186,9 +255,7 @@
       <div class="modal-content schedule-content">
         <span class="close-btn" onclick="closeScheduleModal()">&times;</span>
         <h3>📅 Jadwal Rilis Anime</h3>
-
         <div class="day-tabs" id="day-tabs"></div>
-
         <div id="schedule-list" class="schedule-grid">
           <p style="text-align: center; margin-top: 20px">
             Pilih hari untuk melihat jadwal.
@@ -201,6 +268,7 @@
       <div class="modal-content">
         <span class="close-btn" onclick="closeModal()">&times;</span>
         <h3 id="modal-title">Judul Anime</h3>
+
         <div class="video-controls">
           <button id="btn-video-prev" class="nav-vid-btn">
             <i class="fas fa-step-backward"></i> Eps Sebelumnya
@@ -209,12 +277,14 @@
             Eps Selanjutnya <i class="fas fa-step-forward"></i>
           </button>
         </div>
+
         <div class="video-episode-bar">
           <span class="bar-label"
             ><i class="fas fa-list-ol"></i> Pilih Episode:</span
           >
           <div id="video-episode-numbers" class="video-episode-numbers"></div>
         </div>
+
         <div class="server-container">
           <span class="server-label"
             ><i class="fas fa-server"></i> Pilih Server:</span
@@ -225,10 +295,13 @@
         <div class="video-wrapper"></div>
       </div>
     </div>
+
     <div id="toast-container"></div>
+
     <button id="btn-scroll-top" onclick="scrollToTop()">
       <i class="fas fa-arrow-up"></i>
     </button>
+
     <div id="music-toggle" onclick="toggleMusicPlayer()">
       <i class="fas fa-music"></i>
       <span class="pulse-ring"></span>
@@ -239,7 +312,6 @@
         <span>J-Music Radio</span>
         <i class="fas fa-chevron-down" onclick="toggleMusicPlayer()"></i>
       </div>
-
       <div class="mp-info">
         <img
           id="mp-cover"
@@ -251,7 +323,6 @@
           <div id="mp-artist" class="mp-artist">...</div>
         </div>
       </div>
-
       <div class="mp-controls">
         <button onclick="prevSong()">
           <i class="fas fa-step-backward"></i>
@@ -263,11 +334,9 @@
           <i class="fas fa-step-forward"></i>
         </button>
       </div>
-
       <div class="mp-progress-container" onclick="seekMusic(event)">
         <div id="mp-progress-bar" class="mp-progress-bar"></div>
       </div>
-
       <div
         id="youtube-player-hidden"
         style="
@@ -279,7 +348,63 @@
         "
       ></div>
     </div>
+
+    <div class="mobile-bottom-nav">
+      <div onclick="window.location.reload()">
+        <i class="fas fa-home"></i>Home
+      </div>
+      <div onclick="showFavorites()"><i class="fas fa-heart"></i>Favorit</div>
+      <div onclick="showHistory()"><i class="fas fa-history"></i>Riwayat</div>
+      <div onclick="openScheduleModal()">
+        <i class="fas fa-calendar-alt"></i>Jadwal
+      </div>
+      <div onclick="fetchCompletedAnime(1)">
+        <i class="fas fa-check-circle"></i>Tamat
+      </div>
+      <div onclick="openGenreModal()"><i class="fas fa-tags"></i>Genre</div>
+    </div>
+
+    <footer class="pro-footer">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <h2>Go<span>Nime</span></h2>
+          <p>
+            Platform streaming anime gratis terbaik dengan subtitle Indonesia.
+            Nonton anime tanpa ribet, update setiap hari.
+          </p>
+          <div class="social-icons">
+            <a href="#"><i class="fab fa-facebook-f"></i></a>
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-instagram"></i></a>
+            <a href="#"><i class="fab fa-discord"></i></a>
+          </div>
+        </div>
+
+        <div class="footer-links">
+          <h4>Jelajahi</h4>
+          <a href="#" onclick="fetchAnime(1)">Anime Terbaru</a>
+          <a href="#" onclick="fetchCompletedAnime(1)">Anime Tamat</a>
+          <a href="#" onclick="openGenreModal()">Daftar Genre</a>
+          <a href="#" onclick="openScheduleModal()">Jadwal Rilis</a>
+        </div>
+
+        <div class="footer-links">
+          <h4>Bantuan</h4>
+          <a href="#">Lapor Error</a>
+          <a href="#">Request Anime</a>
+          <a href="#">DMCA</a>
+          <a href="#">Syarat & Ketentuan</a>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>
+          &copy; 2024 GoNime Indonesia. Dibuat dengan
+          <i class="fas fa-heart" style="color: var(--primary)"></i> oleh
+          Kharis.
+        </p>
+      </div>
+    </footer>
+
     <script src="script.js"></script>
   </body>
 </html>
-
