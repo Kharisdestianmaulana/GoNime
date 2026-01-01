@@ -1792,3 +1792,4 @@ window.onload = () => {
   // Load slider (Fungsi sudah ada sekarang)
   initHeroSlider();
 };
+
