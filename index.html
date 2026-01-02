@@ -96,6 +96,9 @@
                 ><i class="fas fa-calendar-alt"></i> Jadwal Rilis</a
               >
               <hr />
+              <a href="#" onclick="openSettingsModal(); toggleUserMenu()"
+                ><i class="fas fa-cog"></i> Pengaturan</a
+              >
               <a href="#" onclick="logoutUser()" class="logout-link"
                 ><i class="fas fa-sign-out-alt"></i> Keluar</a
               >
@@ -271,6 +274,15 @@
           <div class="episode-section">
             <div class="episode-header">
               <h4>Daftar Episode</h4>
+              <div class="eps-search-wrapper">
+                <input
+                  type="number"
+                  id="eps-search-input"
+                  placeholder="Cari eps..."
+                  oninput="filterEpisodes()"
+                />
+                <i class="fas fa-search"></i>
+              </div>
               <select
                 id="episode-range"
                 onchange="renderEpisodeListFromRange()"
@@ -444,6 +456,65 @@
           <a href="#">Syarat & Ketentuan</a>
         </div>
       </div>
+
+      <div id="settings-modal" class="modal">
+        <div
+          class="modal-content"
+          style="max-width: 500px; height: auto; max-height: 90vh"
+        >
+          <span class="close-btn" onclick="closeSettingsModal()">&times;</span>
+
+          <div style="padding: 30px">
+            <h3
+              style="
+                margin-bottom: 25px;
+                text-align: center;
+                border-bottom: 1px solid #333;
+                padding-bottom: 15px;
+              "
+            >
+              <i class="fas fa-user-cog"></i> Edit Profil
+            </h3>
+
+            <div class="settings-form">
+              <div class="avatar-upload-wrapper">
+                <img id="settings-avatar-preview" src="" alt="Avatar Preview" />
+                <label for="avatar-input" class="avatar-edit-btn">
+                  <i class="fas fa-camera"></i>
+                </label>
+                <input
+                  type="file"
+                  id="avatar-input"
+                  accept="image/*"
+                  style="display: none"
+                  onchange="previewAvatar(event)"
+                />
+              </div>
+
+              <div class="form-group">
+                <label>Nama Tampilan</label>
+                <div class="input-with-icon">
+                  <i class="fas fa-user"></i>
+                  <input
+                    type="text"
+                    id="settings-name-input"
+                    placeholder="Nama Kamu"
+                  />
+                </div>
+              </div>
+
+              <button
+                onclick="saveProfileSettings()"
+                class="btn-primary"
+                style="width: 100%; margin-top: 20px; justify-content: center"
+              >
+                Simpan Perubahan
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="footer-bottom">
         <p>
           &copy; <span id="year-auto"></span> GoNime Indonesia. Dibuat dengan
