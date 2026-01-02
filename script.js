@@ -72,12 +72,14 @@ window.checkUserSession = async () => {
     // 4. Ambil Data Cloud
     await loadDataFromCloud(user.$id);
     listenToRealtimeUpdates(user.$id);
+    setTimeout(updateGreeting, 500);
     console.log(`Login sukses: ${user.name}`);
   } catch (e) {
     // Mode Tamu
     console.log("Mode Tamu / Belum Login");
     document.getElementById("auth-buttons").style.display = "flex";
     document.getElementById("user-profile-area").style.display = "none";
+    updateGreeting();
   }
 };
 
@@ -2825,6 +2827,33 @@ function renderXPBar() {
   }
   if (xpText) xpText.innerText = `${userTotalXP} / ${maxXP} XP`;
   if (xpFill) xpFill.style.width = `${percent}%`;
+}
+
+function updateGreeting() {
+  const greetingEl = document.getElementById("greeting-text");
+  if (!greetingEl) return;
+
+  // 1. Cek Jam Sistem
+  const hour = new Date().getHours();
+  let greet = "Selamat Pagi";
+
+  if (hour >= 4 && hour < 11) greet = "Selamat Pagi";
+  else if (hour >= 11 && hour < 15) greet = "Selamat Siang";
+  else if (hour >= 15 && hour < 18) greet = "Selamat Sore";
+  else greet = "Selamat Malam";
+
+  // 2. Ambil Nama User (kalau login)
+  // Kita ambil dari elemen user-name-display yang sudah di-set oleh checkUserSession
+  const nameEl = document.getElementById("user-name-display");
+  let name = "Guest";
+
+  if (nameEl && nameEl.innerText !== "Guest") {
+    // Ambil nama depan saja biar akrab
+    name = nameEl.innerText.split(" ")[0];
+  }
+
+  // 3. Render Teks
+  greetingEl.innerHTML = `${greet}, <span>${name}</span> 👋`;
 }
 
 window.onload = () => {
