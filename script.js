@@ -448,31 +448,6 @@ function renderHorizontalCards(animeList, container) {
 // 2. HERO SLIDER LOGIC (INI YANG HILANG SEBELUMNYA)
 // =========================================
 
-async function initHeroSlider() {
-  const container = document.getElementById("hero-slider");
-  if (!container) return; // Kalau elemen HTML tidak ada, stop.
-
-  try {
-    // Ambil data ongoing untuk dijadikan headline
-    const response = await fetch(`${BASE_URL}/anime/ongoing-anime?page=1`);
-    const result = await response.json();
-    const data = normalizeData(result);
-
-    if (data && data.length > 0) {
-      // Ambil 5 anime teratas
-      heroAnimeList = data.slice(0, 5);
-      renderHeroSlides();
-      startHeroInterval();
-    } else {
-      container.innerHTML =
-        '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">Gagal memuat slider</div>';
-    }
-  } catch (e) {
-    console.error("Hero Slider Error:", e);
-    // Jangan di-hide container-nya biar user tau ada error, atau biarkan kosong
-  }
-}
-
 function renderHeroSlides() {
   const container = document.getElementById("hero-slider");
   const dotsContainer = document.getElementById("hero-dots");
@@ -2136,35 +2111,6 @@ window.scrollToContent = function () {
   if (content) content.scrollIntoView({ behavior: "smooth" });
 };
 
-async function initHeroSlider() {
-  const container = document.getElementById("hero-slider");
-  if (!container) return;
-
-  try {
-    // Ambil data ongoing
-    const response = await fetch(`${BASE_URL}/anime/ongoing-anime?page=1`);
-    const result = await response.json();
-    const data = normalizeData(result);
-
-    if (data && data.length > 0) {
-      // Ambil 5 anime teratas
-      heroAnimeList = data.slice(0, 5);
-
-      // FETCH DETAIL TAMBAHAN (Untuk dapat link trailer)
-      // Karena API ongoing biasanya tidak ada link trailernya
-      await fetchTrailersForHero();
-
-      renderHeroSlides();
-      startHeroInterval();
-    } else {
-      container.innerHTML =
-        '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">Gagal memuat slider</div>';
-    }
-  } catch (e) {
-    console.error("Hero Slider Error:", e);
-  }
-}
-
 // Fungsi Mencari Trailer untuk setiap Anime di Slider
 async function fetchTrailersForHero() {
   // Kita loop data hero dan panggil detailnya satu-satu secara paralel
@@ -2345,6 +2291,75 @@ function playHeroVideo(index) {
             `;
       slide.classList.add("has-video"); // Trigger CSS fade-in
     }, 1000); // Muncul setelah 1 detik
+  }
+}
+
+function getDailySeed() {
+  const today = new Date();
+  // Angka ini berubah setiap hari (Contoh: 20260102)
+  return (
+    today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate()
+  );
+}
+
+// Helper: Mengacak Array berdasarkan Seed
+function shuffleArrayWithSeed(array, seed) {
+  let m = array.length,
+    t,
+    i;
+  const random = () => {
+    var x = Math.sin(seed++) * 10000;
+    return x - Math.floor(x);
+  };
+  while (m) {
+    i = Math.floor(random() * m--);
+    t = array[m];
+    array[m] = array[i];
+    array[i] = t;
+  }
+  return array;
+}
+
+// FUNGSI UTAMA (Hanya pakai satu ini saja)
+async function initHeroSlider() {
+  const container = document.getElementById("hero-slider");
+  if (!container) return;
+
+  try {
+    // 1. AMBIL BANYAK DATA (Page 1 & 2) BIAR VARIATIF
+    const req1 = fetch(`${BASE_URL}/anime/ongoing-anime?page=1`);
+    const req2 = fetch(`${BASE_URL}/anime/ongoing-anime?page=2`);
+
+    const [res1, res2] = await Promise.all([req1, req2]);
+    const result1 = await res1.json();
+    const result2 = await res2.json();
+
+    // Gabungkan data
+    let poolAnime = [...normalizeData(result1), ...normalizeData(result2)];
+
+    if (poolAnime && poolAnime.length > 0) {
+      // 2. ACAK BERDASARKAN TANGGAL (DAILY ROTATION)
+      const seed = getDailySeed();
+      const shuffledList = shuffleArrayWithSeed(poolAnime, seed);
+
+      // 3. AMBIL 5 TERATAS
+      heroAnimeList = shuffledList.slice(0, 5);
+
+      // 4. CARI TRAILERNYA (VIDEO BACKGROUND)
+      // Ini baris penting dari kode kedua kamu tadi
+      await fetchTrailersForHero();
+
+      // 5. RENDER
+      renderHeroSlides();
+      startHeroInterval();
+
+      console.log("Hero Slider aktif. Seed hari ini:", seed);
+    } else {
+      container.innerHTML =
+        '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">Gagal memuat slider</div>';
+    }
+  } catch (e) {
+    console.error("Hero Slider Error:", e);
   }
 }
 
