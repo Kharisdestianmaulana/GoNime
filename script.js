@@ -1,6 +1,182 @@
 const BASE_URL = "https://www.sankavollerei.com";
-
+const client = new Appwrite.Client();
+const account = new Appwrite.Account(client);
+const databases = new Appwrite.Databases(client);
 // --- DOM ELEMENTS ---
+const PROJECT_ID = "6956feda000f9e4760cd";
+const DB_ID = "GoNime_DB";
+const COL_ID = "users_data";
+client
+  .setEndpoint("https://sgp.cloud.appwrite.io/v1")
+  .setProject("6956feda000f9e4760cd");
+let CURRENT_USER_ID = null;
+window.loginWithProvider = (provider) => {
+  try {
+    account.createOAuth2Session(
+      provider,
+      window.location.href, // URL Sukses (Balik ke halaman ini)
+      window.location.href // URL Gagal
+    );
+  } catch (e) {
+    showToast("Gagal inisialisasi login", "error");
+  }
+};
+
+// Logout
+window.logoutUser = async () => {
+  try {
+    await account.deleteSession("current");
+    localStorage.removeItem("SANKA_FAVORITES_DATA"); // Hapus data lokal
+    localStorage.removeItem("SANKA_HISTORY_LIST");
+    window.location.reload(); // Refresh halaman
+  } catch (e) {
+    showToast("Gagal logout", "error");
+  }
+};
+
+// Cek Status User saat Website Dibuka
+window.checkUserSession = async () => {
+  try {
+    const user = await account.get();
+    CURRENT_USER_ID = user.$id;
+
+    // 1. Sembunyikan Tombol Login
+    const authBtns = document.getElementById("auth-buttons");
+    if (authBtns) authBtns.style.display = "none";
+
+    // 2. Tampilkan Area Profil
+    const userArea = document.getElementById("user-profile-area");
+    if (userArea) userArea.style.display = "block";
+
+    // 3. Update Data UI (Nama & Avatar)
+    const nameDisplay = document.getElementById("user-name-display"); // Di dalam dropdown
+    const headerName = document.getElementById("header-username"); // Di sebelah avatar (BARU)
+    const avatarImg = document.getElementById("user-avatar");
+
+    if (nameDisplay) nameDisplay.innerText = user.name;
+    if (headerName) headerName.innerText = user.name.split(" ")[0]; // Ambil nama depan aja
+
+    if (avatarImg) {
+      // Pakai UI Avatars yang lebih stabil
+      avatarImg.src = `https://ui-avatars.com/api/?name=${user.name}&background=ff4757&color=fff&bold=true&size=128`;
+    }
+
+    // 4. Ambil Data Cloud
+    await loadDataFromCloud(user.$id);
+    console.log(`Login sukses: ${user.name}`);
+  } catch (e) {
+    // Mode Tamu
+    console.log("Mode Tamu / Belum Login");
+    document.getElementById("auth-buttons").style.display = "flex";
+    document.getElementById("user-profile-area").style.display = "none";
+  }
+};
+
+// Toggle Menu Dropdown Profil
+window.toggleUserMenu = function (e) {
+  // Cegah bubbling kalau diklik
+  if (e) e.stopPropagation();
+
+  const menu = document.getElementById("user-dropdown");
+  const arrow = document.querySelector(".dropdown-arrow");
+
+  if (menu) {
+    menu.classList.toggle("show");
+    // Putar panah kalau menu kebuka
+    if (arrow) {
+      if (menu.classList.contains("show"))
+        arrow.style.transform = "rotate(180deg)";
+      else arrow.style.transform = "rotate(0deg)";
+    }
+  }
+};
+
+window.addEventListener("click", function (e) {
+  const userArea = document.getElementById("user-profile-area");
+  const menu = document.getElementById("user-dropdown");
+
+  // Kalau yang diklik BUKAN bagian dari userArea, tutup menu
+  if (userArea && !userArea.contains(e.target)) {
+    if (menu && menu.classList.contains("show")) {
+      menu.classList.remove("show");
+      const arrow = document.querySelector(".dropdown-arrow");
+      if (arrow) arrow.style.transform = "rotate(0deg)";
+    }
+  }
+});
+
+// Tutup dropdown kalau klik di luar
+window.onclick = function (e) {
+  // Logika Modal Lama
+  const videoModal = document.getElementById("video-modal");
+  const detailModal = document.getElementById("detail-modal");
+  const genreModal = document.getElementById("genre-modal");
+  const scheduleModal = document.getElementById("schedule-modal");
+
+  if (e.target == videoModal) {
+    videoModal.style.display = "none";
+    document.querySelector(".video-wrapper").innerHTML = "";
+  }
+  if (e.target == detailModal) detailModal.style.display = "none";
+  if (e.target == genreModal) genreModal.style.display = "none";
+  if (e.target == scheduleModal) scheduleModal.style.display = "none";
+
+  // Logika Dropdown User
+  if (
+    !e.target.matches(".nav-avatar") &&
+    !e.target.matches(".dropdown-arrow") &&
+    !e.target.matches(".avatar-wrapper")
+  ) {
+    const menu = document.getElementById("user-dropdown");
+    if (menu && menu.classList.contains("show")) {
+      menu.classList.remove("show");
+    }
+  }
+};
+
+// =========================================
+// 2. DATABASE CLOUD (SYNC)
+// =========================================
+
+// Simpan Data ke Cloud
+window.saveToCloud = async (type, jsonData) => {
+  if (!CURRENT_USER_ID) return; // Kalau tamu, gak simpan ke cloud
+
+  const payload = {};
+  payload[type] = JSON.stringify(jsonData);
+
+  try {
+    await databases.updateDocument(DB_ID, COL_ID, CURRENT_USER_ID, payload);
+    console.log(`Data ${type} tersimpan ke cloud.`);
+  } catch (e) {
+    // Kalau dokumen belum ada, buat baru
+    try {
+      await databases.createDocument(DB_ID, COL_ID, CURRENT_USER_ID, payload);
+      console.log(`Dokumen baru dibuat untuk ${type}.`);
+    } catch (err) {
+      console.error("Gagal simpan ke cloud:", err);
+    }
+  }
+};
+
+// Ambil Data dari Cloud
+async function loadDataFromCloud(userId) {
+  try {
+    const doc = await databases.getDocument(DB_ID, COL_ID, userId);
+
+    if (doc.favorites) {
+      const cloudFav = JSON.parse(doc.favorites);
+      localStorage.setItem(STORAGE_KEY_FAV, JSON.stringify(cloudFav));
+    }
+    if (doc.history) {
+      const cloudHist = JSON.parse(doc.history);
+      localStorage.setItem(STORAGE_KEY_HISTORY_LIST, JSON.stringify(cloudHist));
+    }
+    loadContinueWatching(); // Refresh tampilan home
+  } catch (e) {
+    console.log("User baru, data cloud kosong.");
+  }
+}
 const grid = document.getElementById("anime-grid");
 const loading = document.getElementById("loading");
 const videoModal = document.getElementById("video-modal");
@@ -1330,6 +1506,7 @@ window.toggleFavorite = function (id, title, image) {
   }
   localStorage.setItem(STORAGE_KEY_FAV, JSON.stringify(favs));
   updateFavoriteBtnUI(id);
+  saveToCloud("favorites", favs);
 };
 function updateFavoriteBtnUI(id) {
   const btn = document.getElementById("btn-favorite");
@@ -1398,6 +1575,7 @@ function addToHistoryList(id, title, image, lastEp) {
   list.unshift(item);
   if (list.length > 50) list.pop();
   localStorage.setItem(STORAGE_KEY_HISTORY_LIST, JSON.stringify(list));
+  saveToCloud("history", list);
 }
 function getWatchedData() {
   return JSON.parse(localStorage.getItem(STORAGE_KEY_WATCHED)) || {};
@@ -1786,10 +1964,7 @@ window.scrollToContent = function () {
 };
 
 window.onload = () => {
-  // Load konten beranda
   loadHomePage();
-
-  // Load slider (Fungsi sudah ada sekarang)
   initHeroSlider();
+  checkUserSession();
 };
-
