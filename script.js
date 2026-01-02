@@ -375,6 +375,88 @@ const musicPlaylist = [
   },
 ];
 
+const QUEST_DB = [
+  // --- Misi Nonton ---
+  {
+    id: "watch_1",
+    type: "watch",
+    target: 1,
+    title: "Tonton 1 Episode",
+    exp: 10,
+    icon: "fa-play",
+  },
+  {
+    id: "watch_3",
+    type: "watch",
+    target: 3,
+    title: "Maraton 3 Episode",
+    exp: 30,
+    icon: "fa-film",
+  },
+  {
+    id: "watch_5",
+    type: "watch",
+    target: 5,
+    title: "Maraton 5 Episode (Hard)",
+    exp: 60,
+    icon: "fa-fire",
+  },
+
+  // --- Misi Interaksi (Tanpa Komentar) ---
+  {
+    id: "fav_1",
+    type: "fav",
+    target: 1,
+    title: "Favoritkan 1 Anime",
+    exp: 10,
+    icon: "fa-heart",
+  },
+  {
+    id: "share_1",
+    type: "share",
+    target: 1,
+    title: "Share Anime ke Teman",
+    exp: 20,
+    icon: "fa-share-alt",
+  },
+  {
+    id: "search_1",
+    type: "search",
+    target: 1,
+    title: "Cari Anime Apapun",
+    exp: 5,
+    icon: "fa-search",
+  },
+
+  // --- Misi Eksplorasi Fitur (BARU) ---
+  {
+    id: "schedule_1",
+    type: "schedule",
+    target: 1,
+    title: "Cek Jadwal Rilis",
+    exp: 10,
+    icon: "fa-calendar-alt",
+  },
+  {
+    id: "genre_1",
+    type: "genre",
+    target: 1,
+    title: "Buka Menu Genre",
+    exp: 10,
+    icon: "fa-tags",
+  },
+  {
+    id: "history_1",
+    type: "history",
+    target: 1,
+    title: "Cek Riwayat Nonton",
+    exp: 5,
+    icon: "fa-history",
+  },
+];
+let userTotalXP = 0;
+let dailyProgress = {};
+
 let currentMusicIndex = 0;
 let musicPlayer = null;
 let isMusicPlaying = false;
@@ -717,6 +799,7 @@ window.searchAnime = async function () {
   document.getElementById("home-rows-container").style.display = "none";
   document.getElementById("grid-view-container").style.display = "block";
   const query = searchInput.value.trim();
+  trackQuest("search");
   if (!query) {
     fetchAnime(1);
     return;
@@ -818,6 +901,7 @@ async function showAnimeDetail(animeId, title, imageTemp) {
     btnWa.href = `https://wa.me/?text=${encodeURIComponent(textShare)}`;
 
   window.copyLink = function () {
+    trackQuest("share");
     navigator.clipboard.writeText(textShare).then(() => {
       showToast("Link berhasil disalin!", "success");
     });
@@ -1137,6 +1221,7 @@ async function fetchVideoReal(episodeSlug, fullTitle) {
 
       // Pilih server pertama
       playVideoSource(servers[0].url, episodeSlug);
+      trackQuest("watch");
 
       setTimeout(() => {
         const f = document.querySelector(".server-btn");
@@ -1330,7 +1415,6 @@ function playVideoSource(streamUrl, episodeId) {
     !streamUrl.includes("mp4upload") &&
     !streamUrl.includes("streamtape") &&
     !streamUrl.includes("embed");
-
   if (isDirectFile) {
     console.log("Memutar sebagai Direct File (Plyr):", streamUrl);
 
@@ -1470,6 +1554,7 @@ function getCleanId(ep) {
 
 // --- GENRE ---
 window.openGenreModal = async function () {
+  trackQuest("genre");
   genreModal.style.display = "flex";
   if (isGenreLoaded) return;
   genreListContainer.innerHTML = "<p>Loading genre...</p>";
@@ -1542,6 +1627,7 @@ async function fetchAnimeByGenre(slug, genreName, page = 1) {
 
 // --- SCHEDULE ---
 window.openScheduleModal = async function () {
+  trackQuest("schedule");
   scheduleModal.style.display = "flex";
   if (scheduleData.length > 0) return;
   scheduleListContainer.innerHTML = '<div class="loading">Memuat...</div>';
@@ -1665,6 +1751,7 @@ window.toggleFavorite = function (id, title, image) {
   }
   localStorage.setItem(STORAGE_KEY_FAV, JSON.stringify(favs));
   updateFavoriteBtnUI(id);
+  trackQuest("fav");
   console.log("Mengirim favorit ke cloud...", favs);
   saveToCloud("favorites", favs);
 };
@@ -1744,6 +1831,7 @@ function isEpisodeWatched(id, ep) {
   return (getWatchedData()[id] || []).includes(ep);
 }
 window.showHistory = function () {
+  trackQuest("history");
   // Grid View
   document.getElementById("home-rows-container").style.display = "none";
   document.getElementById("grid-view-container").style.display = "block";
@@ -2548,6 +2636,196 @@ window.saveProfileSettings = async () => {
     btn.disabled = false;
   }
 };
+
+function openQuestModal() {
+  document.getElementById("quest-modal").style.display = "flex";
+  loadDailyQuests();
+  syncUserXP(); // Ambil XP terbaru dari Appwrite
+}
+
+function closeQuestModal() {
+  document.getElementById("quest-modal").style.display = "none";
+}
+
+// 2. Generate Misi Harian (Seeded Random by Date)
+function getDailyQuestIds() {
+  const seed = getDailySeed(); // Pakai fungsi seed yang kita buat di Hero Slider tadi
+  const shuffled = shuffleArrayWithSeed([...QUEST_DB], seed); // Acak
+  return shuffled.slice(0, 3); // Ambil 3 Teratas
+}
+
+// 3. Load & Render Misi
+function loadDailyQuests() {
+  const listContainer = document.getElementById("quest-list");
+  listContainer.innerHTML = "";
+
+  // Ambil Misi Hari Ini
+  const todaysQuests = getDailyQuestIds();
+
+  // Ambil Progres dari LocalStorage (Reset tiap hari)
+  const todayKey = `QUEST_PROGRESS_${getDailySeed()}`;
+  dailyProgress = JSON.parse(localStorage.getItem(todayKey)) || {};
+
+  todaysQuests.forEach((quest) => {
+    // Cek progres saat ini
+    const current = dailyProgress[quest.id] || 0;
+    const isFinished = current >= quest.target;
+    const isClaimed = dailyProgress[`${quest.id}_claimed`] === true;
+    const percent = Math.min((current / quest.target) * 100, 100);
+
+    // Render HTML
+    const div = document.createElement("div");
+    div.className = "quest-item";
+    div.innerHTML = `
+            <div class="quest-icon"><i class="fas ${quest.icon}"></i></div>
+            <div class="quest-info">
+                <div class="quest-title">${quest.title}</div>
+                <div class="quest-reward"><i class="fas fa-bolt"></i> ${
+                  quest.exp
+                } XP</div>
+                <div class="quest-progress-bg">
+                    <div class="quest-progress-fill" style="width: ${percent}%"></div>
+                </div>
+                <div style="font-size:0.7rem; color:#666; margin-top:4px;">Progres: ${current}/${
+      quest.target
+    }</div>
+            </div>
+            ${renderClaimButton(quest, isFinished, isClaimed)}
+        `;
+    listContainer.appendChild(div);
+  });
+}
+
+function renderClaimButton(quest, isFinished, isClaimed) {
+  if (isClaimed) {
+    return `<button class="btn-claim completed" disabled><i class="fas fa-check"></i> Selesai</button>`;
+  } else if (isFinished) {
+    return `<button class="btn-claim" onclick="claimReward('${quest.id}', ${quest.exp})">Klaim</button>`;
+  } else {
+    return `<button class="btn-claim" disabled style="opacity:0.5; background:#444; box-shadow:none;">Jalan</button>`;
+  }
+}
+
+// 4. Tracking System (Panggil ini di fungsi lain)
+function trackQuest(actionType) {
+  const todayKey = `QUEST_PROGRESS_${getDailySeed()}`;
+  dailyProgress = JSON.parse(localStorage.getItem(todayKey)) || {};
+
+  const todaysQuests = getDailyQuestIds();
+  let hasUpdate = false;
+
+  todaysQuests.forEach((quest) => {
+    if (quest.type === actionType) {
+      const current = dailyProgress[quest.id] || 0;
+      if (current < quest.target) {
+        dailyProgress[quest.id] = current + 1;
+        hasUpdate = true;
+
+        // Notif kecil jika selesai
+        if (dailyProgress[quest.id] >= quest.target) {
+          showToast(`🎯 Misi Selesai: ${quest.title}`, "success");
+          // Munculkan titik merah di menu
+          const dot = document.getElementById("quest-notif");
+          if (dot) dot.style.display = "inline-block";
+        }
+      }
+    }
+  });
+
+  if (hasUpdate) {
+    localStorage.setItem(todayKey, JSON.stringify(dailyProgress));
+  }
+}
+
+// 5. Claim Reward
+async function claimReward(questId, expAmount) {
+  if (!CURRENT_USER_ID) {
+    showToast("Login dulu untuk simpan XP!", "error");
+    return;
+  }
+
+  // Update LocalStorage (Tandai sudah klaim)
+  const todayKey = `QUEST_PROGRESS_${getDailySeed()}`;
+  dailyProgress = JSON.parse(localStorage.getItem(todayKey)) || {};
+  dailyProgress[`${questId}_claimed`] = true;
+  localStorage.setItem(todayKey, JSON.stringify(dailyProgress));
+
+  // Update Appwrite (Simpan Total XP)
+  try {
+    const user = await account.get();
+    let currentTotalXP = 0;
+    if (user.prefs && user.prefs.xp) {
+      currentTotalXP = parseInt(user.prefs.xp);
+    }
+
+    const newTotalXP = currentTotalXP + expAmount;
+
+    // Simpan ke Prefs
+    await account.updatePrefs({ ...user.prefs, xp: newTotalXP });
+
+    userTotalXP = newTotalXP;
+    showToast(`🎉 +${expAmount} XP Diterima!`, "success");
+
+    // Render ulang modal biar tombol jadi "Selesai"
+    loadDailyQuests();
+    renderXPBar(); // Update bar XP di modal
+  } catch (e) {
+    console.error("Gagal klaim:", e);
+    showToast("Gagal mengklaim reward.", "error");
+  }
+}
+
+// 6. Sync & Render XP Bar
+async function syncUserXP() {
+  if (!CURRENT_USER_ID) return;
+  try {
+    const user = await account.get();
+    if (user.prefs && user.prefs.xp) {
+      userTotalXP = parseInt(user.prefs.xp);
+    } else {
+      userTotalXP = 0;
+    }
+    renderXPBar();
+  } catch (e) {
+    console.log("Gagal sync XP");
+  }
+}
+
+function renderXPBar() {
+  const rankName = document.getElementById("user-rank-name");
+  const xpText = document.getElementById("user-xp-text");
+  const xpFill = document.getElementById("user-xp-fill");
+
+  // Logika Rank Sederhana
+  let rank = "Newbie";
+  let maxXP = 100; // XP butuh untuk naik level
+  let color = "#aaa";
+
+  if (userTotalXP >= 500) {
+    rank = "Sepuh Anime";
+    maxXP = 1000;
+    color = "#f1c40f";
+  } else if (userTotalXP >= 200) {
+    rank = "Wibu Elite";
+    maxXP = 500;
+    color = "#e74c3c";
+  } else if (userTotalXP >= 50) {
+    rank = "Wibu Pemula";
+    maxXP = 200;
+    color = "#2ecc71";
+  }
+
+  // Hitung persentase bar
+  // (Ini simplified, aslinya pakai sistem level bertingkat)
+  const percent = Math.min((userTotalXP / maxXP) * 100, 100);
+
+  if (rankName) {
+    rankName.innerText = rank;
+    rankName.style.color = color;
+  }
+  if (xpText) xpText.innerText = `${userTotalXP} / ${maxXP} XP`;
+  if (xpFill) xpFill.style.width = `${percent}%`;
+}
 
 window.onload = () => {
   loadHomePage();
