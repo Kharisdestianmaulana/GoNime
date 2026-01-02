@@ -63,6 +63,7 @@ window.checkUserSession = async () => {
 
     // 4. Ambil Data Cloud
     await loadDataFromCloud(user.$id);
+    listenToRealtimeUpdates(user.$id);
     console.log(`Login sukses: ${user.name}`);
   } catch (e) {
     // Mode Tamu
@@ -228,6 +229,66 @@ async function loadDataFromCloud(userId) {
   } catch (e) {
     console.log("⚠️ Gagal sync (Mungkin user baru/koneksi error):", e.message);
   }
+}
+
+let realtimeSubscription = null;
+function listenToRealtimeUpdates(userId) {
+  // Cegah double subscription
+  if (realtimeSubscription) return;
+
+  console.log("📡 Menghubungkan ke Saluran Real-time...");
+
+  // Subscribe ke Dokumen User spesifik
+  // Channel: databases.[DB_ID].collections.[COL_ID].documents.[USER_ID]
+  realtimeSubscription = client.subscribe(
+    `databases.${DB_ID}.collections.${COL_ID}.documents.${userId}`,
+    (response) => {
+      // Cek apakah event-nya adalah UPDATE
+      if (
+        response.events.includes("databases.*.collections.*.documents.*.update")
+      ) {
+        console.log("🔔 Ping! Ada data baru dari server!", response.payload);
+
+        const data = response.payload;
+
+        // 1. UPDATE FAVORIT (Real-time)
+        if (data.favorites && data.favorites.length > 2) {
+          localStorage.setItem(
+            STORAGE_KEY_FAV,
+            JSON.parse(JSON.stringify(data.favorites))
+          );
+
+          // Kalau user sedang membuka halaman Favorit, refresh list-nya
+          if (currentView === "favorites") {
+            showFavorites();
+          }
+          // Update tombol hati jika sedang membuka detail anime
+          if (activeAnimeId) {
+            updateFavoriteBtnUI(activeAnimeId);
+          }
+        }
+
+        // 2. UPDATE RIWAYAT (Real-time)
+        if (data.history && data.history.length > 2) {
+          localStorage.setItem(
+            STORAGE_KEY_HISTORY_LIST,
+            JSON.parse(JSON.stringify(data.history))
+          );
+
+          // Update tampilan "Lanjut Menonton" di Home
+          loadContinueWatching();
+
+          // Kalau user sedang membuka halaman Riwayat, refresh list-nya
+          if (currentView === "history") {
+            showHistory();
+          }
+        }
+
+        // Opsional: Kasih notif kecil biar keren
+        // showToast("Sinkronisasi data berhasil!", "info");
+      }
+    }
+  );
 }
 
 const grid = document.getElementById("anime-grid");
