@@ -6,6 +6,8 @@ const databases = new Appwrite.Databases(client);
 const PROJECT_ID = "6956feda000f9e4760cd";
 const DB_ID = "6957002e0011dc3a0399";
 const COL_ID = "users_data";
+const STORAGE = new Appwrite.Storage(client); // Inisialisasi Storage
+const BUCKET_ID = "avatars";
 
 client
   .setEndpoint("https://sgp.cloud.appwrite.io/v1")
@@ -50,16 +52,21 @@ window.checkUserSession = async () => {
     if (userArea) userArea.style.display = "block";
 
     // 3. Update Data UI (Nama & Avatar)
-    const nameDisplay = document.getElementById("user-name-display"); // Di dalam dropdown
-    const headerName = document.getElementById("header-username"); // Di sebelah avatar (BARU)
+    const nameDisplay = document.getElementById("user-name-display");
+    const headerName = document.getElementById("header-username");
     const avatarImg = document.getElementById("user-avatar");
 
     if (nameDisplay) nameDisplay.innerText = user.name;
-    if (headerName) headerName.innerText = user.name.split(" ")[0]; // Ambil nama depan aja
+    if (headerName) headerName.innerText = user.name.split(" ")[0];
 
     if (avatarImg) {
-      // Pakai UI Avatars yang lebih stabil
-      avatarImg.src = `https://ui-avatars.com/api/?name=${user.name}&background=ff4757&color=fff&bold=true&size=128`;
+      // CEK APAKAH ADA AVATAR KUSTOM DI PREFS?
+      if (user.prefs && user.prefs.avatar) {
+        avatarImg.src = user.prefs.avatar;
+      } else {
+        // Kalau tidak ada, pakai default UI Avatars
+        avatarImg.src = `https://ui-avatars.com/api/?name=${user.name}&background=ff4757&color=fff&bold=true&size=128`;
+      }
     }
 
     // 4. Ambil Data Cloud
@@ -315,7 +322,12 @@ const scheduleModal = document.getElementById("schedule-modal");
 const dayTabsContainer = document.getElementById("day-tabs");
 const scheduleListContainer = document.getElementById("schedule-list");
 const scrollBtn = document.getElementById("btn-scroll-top");
-
+const settingsModal = document.getElementById("settings-modal");
+const settingsNameInput = document.getElementById("settings-name-input");
+const settingsAvatarPreview = document.getElementById(
+  "settings-avatar-preview"
+);
+const avatarInput = document.getElementById("avatar-input");
 // --- STORAGE KEYS ---
 const STORAGE_KEY_WATCHED = "SANKA_WATCHED_HISTORY";
 const STORAGE_KEY_FAV = "SANKA_FAVORITES_DATA";
@@ -2362,6 +2374,180 @@ async function initHeroSlider() {
     console.error("Hero Slider Error:", e);
   }
 }
+
+function filterEpisodes() {
+  const input = document.getElementById("eps-search-input");
+  const filter = input.value.trim();
+  const episodeList = document.getElementById("episode-list");
+  const buttons = episodeList.getElementsByClassName("episode-btn");
+
+  // Jika input kosong, kembalikan tampilan range/pagination normal
+  if (filter === "") {
+    // Render ulang dari range yang dipilih (reset ke kondisi awal)
+    renderEpisodeListFromRange();
+    return;
+  }
+
+  // Jika ada input, kita cari di SELURUH data episode (bukan cuma yg tampil di page ini)
+  // Kita manipulasi DOM langsung biar cepat
+
+  // 1. Bersihkan container dulu
+  episodeList.innerHTML = "";
+
+  // 2. Filter dari data mentah 'currentEpisodes'
+  const filteredData = currentEpisodes.filter((ep) => {
+    // Ambil angka dari judul (misal "Episode 12") -> "12"
+    const match = ep.title.match(/(\d+)/);
+    if (match) {
+      // Cek apakah angka episode mengandung angka yang diketik user
+      return match[1].includes(filter);
+    }
+    return false;
+  });
+
+  if (filteredData.length === 0) {
+    episodeList.innerHTML = `<p style="text-align:center; color:#666; width:100%; grid-column: 1 / -1; padding:20px;">Eps "${filter}" tidak ada.</p>`;
+    return;
+  }
+
+  // 3. Render hasil pencarian
+  filteredData.forEach((ep) => {
+    let epId =
+      ep.episodeId || ep.episode_slug || ep.slug || ep.id || ep.endpoint;
+    if (epId && epId.includes("/"))
+      epId = epId
+        .split("/")
+        .filter((p) => p.length > 0)
+        .pop();
+
+    const epTitle = ep.title || "Episode";
+    const isWatched = isEpisodeWatched(activeAnimeId, epId);
+
+    const btn = document.createElement("div");
+    btn.className = `episode-btn ${isWatched ? "watched" : ""}`;
+    btn.innerHTML = `${
+      isWatched
+        ? '<i class="fas fa-check" style="font-size:0.7rem; margin-right:5px;"></i>'
+        : ""
+    } ${epTitle}`;
+
+    btn.onclick = () => {
+      // ... logika klik sama seperti render biasa ...
+      markAsWatched(
+        activeAnimeId,
+        epId,
+        document.getElementById("detail-title").innerText,
+        activeAnimeImage
+      );
+      fetchVideoReal(epId, epTitle);
+
+      // Update UI tombol
+      document
+        .querySelectorAll(".episode-btn")
+        .forEach((b) => b.classList.remove("watched")); // Reset visual sementara
+      btn.classList.add("watched");
+    };
+    episodeList.appendChild(btn);
+  });
+}
+
+window.openSettingsModal = async () => {
+  if (!CURRENT_USER_ID) {
+    showToast("Login dulu bro!", "error");
+    return;
+  }
+
+  try {
+    const user = await account.get();
+
+    // Isi input nama
+    settingsNameInput.value = user.name;
+
+    // Cek apakah user punya avatar kustom di Prefs
+    // (Kita akan simpan link avatar di user preferences)
+    if (user.prefs && user.prefs.avatar) {
+      settingsAvatarPreview.src = user.prefs.avatar;
+    } else {
+      // Default UI Avatars
+      settingsAvatarPreview.src = `https://ui-avatars.com/api/?name=${user.name}&background=ff4757&color=fff&size=128`;
+    }
+
+    settingsModal.style.display = "flex";
+  } catch (e) {
+    showToast("Gagal memuat profil", "error");
+  }
+};
+
+window.closeSettingsModal = () => {
+  settingsModal.style.display = "none";
+};
+
+// Preview Gambar saat user pilih file (Belum upload)
+window.previewAvatar = (event) => {
+  const file = event.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = function (e) {
+      settingsAvatarPreview.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+  }
+};
+
+// SIMPAN PERUBAHAN (UPLOAD & UPDATE)
+window.saveProfileSettings = async () => {
+  const newName = settingsNameInput.value.trim();
+  const file = avatarInput.files[0];
+  const btn = document.querySelector("#settings-modal .btn-primary");
+
+  if (newName.length < 3) {
+    showToast("Nama terlalu pendek!", "error");
+    return;
+  }
+
+  // Loading State
+  const oldText = btn.innerText;
+  btn.innerText = "Menyimpan...";
+  btn.disabled = true;
+
+  try {
+    // 1. Update Nama jika berubah
+    await account.updateName(newName);
+
+    // 2. Upload Avatar jika ada file baru
+    if (file) {
+      // Upload ke Appwrite Storage
+      // ID File kita buat unik pakai ID.unique()
+      const uploaded = await STORAGE.createFile(
+        BUCKET_ID,
+        Appwrite.ID.unique(),
+        file
+      );
+
+      // Ambil URL Gambar
+      // project & bucket diambil otomatis oleh SDK
+      const avatarUrl = STORAGE.getFileView(BUCKET_ID, uploaded.$id);
+
+      // Simpan URL ke User Preferences
+      // Agar pas login nanti kita tau link gambarnya
+      await account.updatePrefs({
+        avatar: avatarUrl.href, // .href untuk ambil string url
+      });
+    }
+
+    showToast("Profil berhasil diperbarui!", "success");
+    settingsModal.style.display = "none";
+
+    // Refresh Halaman agar UI Navbar berubah
+    setTimeout(() => window.location.reload(), 1000);
+  } catch (e) {
+    console.error(e);
+    showToast("Gagal menyimpan: " + e.message, "error");
+  } finally {
+    btn.innerText = oldText;
+    btn.disabled = false;
+  }
+};
 
 window.onload = () => {
   loadHomePage();
