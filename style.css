@@ -4064,3 +4064,39 @@ h2 {
     margin-left: 0;
   }
 }
+
+.hero-video-wrapper {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 0; /* Di atas gambar background, di bawah konten teks */
+  overflow: hidden;
+  opacity: 0; /* Awalnya sembunyi dulu */
+  transition: opacity 1s ease;
+  pointer-events: none; /* PENTING: Agar user tidak bisa klik videonya */
+}
+
+/* Trik membesarkan video agar menutupi garis hitam Youtube */
+.hero-video-wrapper iframe {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100vw;
+  height: 56.25vw; /* Rasio 16:9 */
+  min-height: 100vh;
+  min-width: 177.77vh;
+  transform: translate(-50%, -50%) scale(1.3); /* Zoom sedikit biar barnya ilang */
+  filter: brightness(0.6); /* Gelapkan video biar teks terbaca */
+}
+
+/* Kelas untuk memunculkan video */
+.hero-slide.has-video .hero-video-wrapper {
+  opacity: 1;
+}
+
+/* Sembunyikan gambar background kalau video sudah jalan */
+.hero-slide.has-video .hero-bg {
+  opacity: 0;
+}
