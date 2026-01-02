@@ -2856,6 +2856,132 @@ function updateGreeting() {
   greetingEl.innerHTML = `${greet}, <span>${name}</span> 👋`;
 }
 
+window.toggleNotifMenu = function (e) {
+  if (e) e.stopPropagation();
+
+  const menu = document.getElementById("notif-dropdown");
+  const userMenu = document.getElementById("user-dropdown");
+
+  // Tutup menu user kalau terbuka
+  if (userMenu && userMenu.classList.contains("show"))
+    userMenu.classList.remove("show");
+
+  menu.classList.toggle("show");
+
+  // Jika dibuka, sembunyikan titik merah (dianggap sudah dibaca sekilas)
+  if (menu.classList.contains("show")) {
+    document.getElementById("notif-dot").style.display = "none";
+  }
+};
+
+// Tutup menu kalau klik di luar
+window.addEventListener("click", function (e) {
+  const notifWrapper = document.querySelector(".notif-wrapper");
+  const menu = document.getElementById("notif-dropdown");
+
+  if (notifWrapper && !notifWrapper.contains(e.target)) {
+    if (menu && menu.classList.contains("show")) {
+      menu.classList.remove("show");
+    }
+  }
+});
+
+async function checkNewEpisodes() {
+  const listContainer = document.getElementById("notif-list");
+  const dot = document.getElementById("notif-dot");
+
+  // Reset isi list dulu
+  listContainer.innerHTML =
+    '<p style="padding:15px; text-align:center; color:#666; font-size:0.8rem;">Memeriksa update terbaru...</p>';
+
+  try {
+    // 1. Ambil Data Anime Ongoing (Terbaru Rilis)
+    const response = await fetch(`${BASE_URL}/anime/ongoing-anime?page=1`);
+    const result = await response.json();
+    const ongoingList = normalizeData(result);
+
+    if (!ongoingList || ongoingList.length === 0) {
+      listContainer.innerHTML =
+        '<p style="padding:10px; text-align:center; color:#ff4757;">Gagal memuat data.</p>';
+      return;
+    }
+
+    // 2. Ambil 10 Anime Teratas Saja (Biar dropdown gak kepanjangan)
+    const latestUpdates = ongoingList.slice(0, 10).map((anime) => ({
+      title: anime.title,
+      image: anime.poster || anime.thumb || anime.image,
+      id: anime.animeId || anime.slug || anime.id,
+      episode: anime.episode || anime.current_episode || "Episode Baru",
+    }));
+
+    // 3. Cek apakah user sudah melihat update ini?
+    // Kita simpan ID anime paling atas di LocalStorage
+    const lastSeenId = localStorage.getItem("LAST_NOTIF_ID");
+    const topAnimeId = latestUpdates[0].id; // ID anime paling baru rilis
+
+    // Jika ID paling atas BEDA dengan yang terakhir dilihat, munculkan titik merah
+    if (lastSeenId !== topAnimeId) {
+      dot.style.display = "block";
+      // Simpan ID baru ini (tapi titik merah tetap nyala sampai diklik)
+      localStorage.setItem("LATEST_TOP_ID", topAnimeId);
+    } else {
+      dot.style.display = "none";
+    }
+
+    // 4. Render Notifikasi
+    renderNotifications(latestUpdates);
+  } catch (e) {
+    console.error("Gagal cek notif:", e);
+    listContainer.innerHTML =
+      '<p style="padding:10px; text-align:center; color:#ff4757;">Gagal memuat update.</p>';
+  }
+}
+
+function renderNotifications(updates) {
+  const listContainer = document.getElementById("notif-list");
+  listContainer.innerHTML = "";
+
+  updates.forEach((item) => {
+    // Bersihkan ID
+    let cleanId = item.id;
+    if (cleanId && cleanId.includes("/"))
+      cleanId = cleanId
+        .split("/")
+        .filter((p) => p.length > 0)
+        .pop();
+
+    const div = document.createElement("div");
+    div.className = "notif-item";
+    div.innerHTML = `
+            <img src="${item.image}" class="notif-img" loading="lazy">
+            <div class="notif-info">
+                <span class="notif-title">${item.title}</span>
+                <span class="notif-desc">
+                    <i class="fas fa-bolt" style="color:#f1c40f"></i> ${item.episode}
+                </span>
+            </div>
+        `;
+
+    div.onclick = () => {
+      showAnimeDetail(cleanId, item.title, item.image);
+      toggleNotifMenu();
+      markAllRead(); // Hilangkan titik merah pas diklik
+    };
+
+    listContainer.appendChild(div);
+  });
+}
+
+// Fitur Tandai Dibaca
+window.markAllRead = () => {
+  document.getElementById("notif-dot").style.display = "none";
+  // Simpan ID teratas sebagai "sudah dilihat"
+  const topId = localStorage.getItem("LATEST_TOP_ID");
+  if (topId) {
+    localStorage.setItem("LAST_NOTIF_ID", topId);
+  }
+};
+
 window.onload = () => {
   loadHomePage();
   initHeroSlider();
