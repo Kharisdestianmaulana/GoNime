@@ -2,10 +2,12 @@ const BASE_URL = "https://www.sankavollerei.com";
 const client = new Appwrite.Client();
 const account = new Appwrite.Account(client);
 const databases = new Appwrite.Databases(client);
+const Query = Appwrite.Query;
 // --- DOM ELEMENTS ---
 const PROJECT_ID = "6956feda000f9e4760cd";
 const DB_ID = "6957002e0011dc3a0399";
 const COL_ID = "users_data";
+const FORUM_COLLECTION_ID = "forum_posts";
 const STORAGE = new Appwrite.Storage(client); // Inisialisasi Storage
 const BUCKET_ID = "avatars";
 
@@ -2982,34 +2984,233 @@ window.markAllRead = () => {
   }
 };
 
-function kirimNotifKeDiscord(judulAnime, episode) {
+function kirimNotifKeDiscord(judulAnime, episode, imageURL) {
   const webhookURL =
     "https://discord.com/api/webhooks/1456618867248861282/4i4gbvQJCyEsQX9SuJnDrI8DRLNbuZwjnso2tcoriyFk2YOlmAO1WHhX3kQ4HD8fQMbc";
 
+  // LOGIKA: Jika imageURL tidak dikirim atau bukan link, jangan kirim field image ke Discord
+  const embed = {
+    title: `Update: ${judulAnime}`,
+    description: `Episode ${episode} sudah bisa ditonton!`,
+    color: 16729943,
+    url: "https://kharisdestianmaulana.github.io/GoNime/",
+  };
+
+  // Hanya tambahkan gambar jika link-nya valid (ada http)
+  if (imageURL && imageURL.startsWith("http")) {
+    embed.image = { url: imageURL };
+  }
+
   const payload = {
     content: "@everyone Episode Baru Rilis! 🚀",
-    embeds: [
-      {
-        title: `Update: ${judulAnime}`,
-        description: `Episode ${episode} sudah bisa ditonton!`,
-        color: 16729943, // Warna Merah (Decimal color)
-        url: "https://kharisdestianmaulana.github.io/GoNime/", // Link website kamu
-        image: {
-          url: "LINK_GAMBAR_POSTER",
-        },
-      },
-    ],
+    embeds: [embed],
   };
 
   fetch(webhookURL, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(payload),
-  });
+  })
+    .then((response) => {
+      if (response.ok) {
+        showToast("Berhasil kirim ke Discord!", "success");
+      } else {
+        console.error("Gagal kirim Webhook");
+      }
+    })
+    .catch((err) => console.error("Error:", err));
+}
+
+async function loadForumPosts() {
+  const container = document.getElementById("forum-posts-container");
+  if (!container) return;
+
+  try {
+    const response = await databases.listDocuments(DB_ID, FORUM_COLLECTION_ID, [
+      Query.orderDesc("$createdAt"),
+    ]);
+
+    console.log("📦 Data Forum dari Appwrite:", response);
+    console.log("🔢 Jumlah Dokumen:", response.total);
+
+    container.innerHTML = ""; // Bersihkan loading
+
+    response.documents.forEach((post) => {
+      const date = new Date(post.$createdAt).toLocaleDateString();
+      const card = `
+                <div class="forum-card">
+                    <div class="post-user">
+                        <img src="${
+                          post.userAvatar || "default-avatar.png"
+                        }" class="post-avatar">
+                        <div>
+                            <strong>${post.userName}</strong>
+                            <span>${date}</span>
+                        </div>
+                    </div>
+                    <h3>${post.title}</h3>
+                    <p>${post.content.substring(0, 150)}...</p>
+                    <div class="forum-actions">
+                         <button onclick="viewPostDetail('${
+                           post.$id
+                         }')"><i class="fas fa-eye"></i> Baca Selengkapnya</button>
+                    </div>
+                </div>
+            `;
+      container.insertAdjacentHTML("beforeend", card);
+    });
+  } catch (e) {
+    console.error("Gagal load forum:", e);
+  }
+}
+
+// 2. Kirim Postingan Baru
+async function submitForumPost() {
+  console.log("🔵 1. Tombol Posting Diklik!");
+
+  const titleInput = document.getElementById("forum-title");
+  const contentInput = document.getElementById("forum-content");
+
+  if (!titleInput || !contentInput) {
+    showToast("Error sistem: Input tidak ditemukan", "error");
+    return;
+  }
+
+  const title = titleInput.value;
+  const content = contentInput.value;
+
+  if (!title || !content) {
+    showToast("Isi judul dan konten dulu!", "warning");
+    return;
+  }
+
+  // Ubah teks tombol biar user tau lagi loading
+  const btnSubmit = document.querySelector("#forum-modal .btn-primary");
+  const oldText = btnSubmit.innerText;
+  btnSubmit.innerText = "Mengirim...";
+  btnSubmit.disabled = true;
+
+  try {
+    const user = await account.get(); // Pastikan user login
+
+    const payload = {
+      title: title,
+      content: content,
+      userName: user.name,
+      userId: user.$id,
+      userAvatar: user.prefs && user.prefs.avatar ? user.prefs.avatar : "",
+      createdAt: new Date().toISOString(),
+    };
+
+    const response = await databases.createDocument(
+      DB_ID,
+      FORUM_COLLECTION_ID,
+      "unique()",
+      payload
+    );
+
+    console.log("✅ Sukses Kirim:", response);
+    showToast("Postingan berhasil dikirim!", "success");
+
+    // 1. BERSIHKAN FORM
+    titleInput.value = "";
+    contentInput.value = "";
+
+    // 2. TUTUP MODAL
+    closeForumModal();
+
+    // 3. UPDATE LIST SECARA LANGSUNG (Tanpa Reload Halaman)
+    // Kita kosongkan dulu container biar kelihatan loading
+    document.getElementById("forum-posts-container").innerHTML =
+      '<div style="text-align:center; padding:20px;"><i class="fas fa-spinner fa-spin"></i> Mengambil data terbaru...</div>';
+
+    // Panggil fungsi load ulang
+    await loadForumPosts();
+  } catch (e) {
+    console.error("🔴 ERROR:", e);
+    if (e.code === 401) alert("Gagal: Sesi habis, silakan login ulang.");
+    else showToast("Gagal kirim: " + e.message, "error");
+  } finally {
+    // Kembalikan tombol seperti semula
+    btnSubmit.innerText = oldText;
+    btnSubmit.disabled = false;
+  }
+}
+
+// Panggil fungsi saat halaman forum dibuka
+if (window.location.pathname.includes("forum.html")) {
+  loadForumPosts();
+}
+
+async function viewPostDetail(documentId) {
+  // 1. Tampilkan Modal Loading Dulu
+  const modal = document.getElementById("view-post-modal");
+  const titleEl = document.getElementById("view-post-title");
+  const contentEl = document.getElementById("view-post-content");
+  const authorEl = document.getElementById("view-post-author");
+  const dateEl = document.getElementById("view-post-date");
+  const avatarEl = document.getElementById("view-post-avatar");
+
+  modal.style.display = "block";
+  titleEl.innerText = "Memuat...";
+  contentEl.innerText = "Sedang mengambil data dari server...";
+
+  try {
+    // 2. Ambil Data Detail dari Appwrite berdasarkan ID
+    const post = await databases.getDocument(
+      DB_ID,
+      FORUM_COLLECTION_ID,
+      documentId
+    );
+
+    // 3. Masukkan Data ke HTML
+    titleEl.innerText = post.title;
+
+    // Render Text (Biar enter/baris baru terbaca)
+    contentEl.innerText = post.content;
+
+    authorEl.innerText = post.userName;
+
+    // Format Tanggal (Contoh: 2 Jan 2026)
+    const dateObj = new Date(post.$createdAt);
+    dateEl.innerText = dateObj.toLocaleDateString("id-ID", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+
+    // Avatar (Pakai default kalau kosong)
+    avatarEl.src =
+      post.userAvatar ||
+      `https://ui-avatars.com/api/?name=${post.userName}&background=random`;
+  } catch (e) {
+    console.error("Gagal ambil detail:", e);
+    titleEl.innerText = "Error";
+    contentEl.innerText = "Gagal memuat postingan. Mungkin sudah dihapus.";
+  }
+}
+
+// Fungsi Tutup Modal Baca
+function closeViewModal() {
+  document.getElementById("view-post-modal").style.display = "none";
 }
 
 window.onload = () => {
-  loadHomePage();
-  initHeroSlider();
   checkUserSession();
+
+  if (document.getElementById("hero-slider")) {
+    loadHomePage();
+    initHeroSlider();
+
+    setTimeout(() => {
+      const splash = document.getElementById("splash-screen");
+      if (splash) splash.classList.add("hide-splash");
+    }, 2000);
+  }
+
+  if (window.location.pathname.includes("forum.html")) {
+    loadForumPosts();
+  }
 };
