@@ -4,7 +4,7 @@ const account = new Appwrite.Account(client);
 const databases = new Appwrite.Databases(client);
 // --- DOM ELEMENTS ---
 const PROJECT_ID = "6956feda000f9e4760cd";
-const DB_ID = "GoNime_DB";
+const DB_ID = "6957002e0011dc3a0399";
 const COL_ID = "users_data";
 client
   .setEndpoint("https://sgp.cloud.appwrite.io/v1")
@@ -161,22 +161,54 @@ window.saveToCloud = async (type, jsonData) => {
 
 // Ambil Data dari Cloud
 async function loadDataFromCloud(userId) {
+  console.log("🔄 Sedang menyinkronkan data dari Cloud...");
+
   try {
     const doc = await databases.getDocument(DB_ID, COL_ID, userId);
+    console.log("📂 Data Cloud Ditemukan:", doc);
 
-    if (doc.favorites) {
-      const cloudFav = JSON.parse(doc.favorites);
-      localStorage.setItem(STORAGE_KEY_FAV, JSON.stringify(cloudFav));
+    // 1. UPDATE FAVORIT DARI CLOUD
+    if (doc.favorites && doc.favorites.length > 2) {
+      // Cek kalo stringnya bukan "[]"
+      try {
+        const cloudFav = JSON.parse(doc.favorites);
+        // TIMPA data lokal dengan data cloud (Cloud Wins)
+        localStorage.setItem(STORAGE_KEY_FAV, JSON.stringify(cloudFav));
+        console.log(`✅ Favorit disinkronkan: ${cloudFav.length} item.`);
+      } catch (err) {
+        console.error("Error parse favorites:", err);
+      }
     }
-    if (doc.history) {
-      const cloudHist = JSON.parse(doc.history);
-      localStorage.setItem(STORAGE_KEY_HISTORY_LIST, JSON.stringify(cloudHist));
+
+    // 2. UPDATE RIWAYAT DARI CLOUD
+    if (doc.history && doc.history.length > 2) {
+      try {
+        const cloudHist = JSON.parse(doc.history);
+        // TIMPA data lokal dengan data cloud (Cloud Wins)
+        localStorage.setItem(
+          STORAGE_KEY_HISTORY_LIST,
+          JSON.stringify(cloudHist)
+        );
+        console.log(`✅ Riwayat disinkronkan: ${cloudHist.length} item.`);
+      } catch (err) {
+        console.error("Error parse history:", err);
+      }
     }
-    loadContinueWatching(); // Refresh tampilan home
+
+    // 3. REFRESH TAMPILAN WEBSITE
+    // Ini penting supaya user langsung melihat perubahannya
+    setTimeout(() => {
+      loadContinueWatching(); // Update "Lanjut Menonton" di Home
+
+      // Update tanda "Mata" (Sudah ditonton) di list episode
+      // Kita reload halaman kalau perlu, atau cukup update UI
+      if (currentView === "home") loadHomePage();
+    }, 500);
   } catch (e) {
-    console.log("User baru, data cloud kosong.");
+    console.log("⚠️ Gagal sync (Mungkin user baru/koneksi error):", e.message);
   }
 }
+
 const grid = document.getElementById("anime-grid");
 const loading = document.getElementById("loading");
 const videoModal = document.getElementById("video-modal");
