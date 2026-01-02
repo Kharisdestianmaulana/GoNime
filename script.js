@@ -6,6 +6,7 @@ const databases = new Appwrite.Databases(client);
 const PROJECT_ID = "6956feda000f9e4760cd";
 const DB_ID = "6957002e0011dc3a0399";
 const COL_ID = "users_data";
+
 client
   .setEndpoint("https://sgp.cloud.appwrite.io/v1")
   .setProject("6956feda000f9e4760cd");
@@ -2134,6 +2135,218 @@ window.scrollToContent = function () {
   const content = document.getElementById("home-rows-container");
   if (content) content.scrollIntoView({ behavior: "smooth" });
 };
+
+async function initHeroSlider() {
+  const container = document.getElementById("hero-slider");
+  if (!container) return;
+
+  try {
+    // Ambil data ongoing
+    const response = await fetch(`${BASE_URL}/anime/ongoing-anime?page=1`);
+    const result = await response.json();
+    const data = normalizeData(result);
+
+    if (data && data.length > 0) {
+      // Ambil 5 anime teratas
+      heroAnimeList = data.slice(0, 5);
+
+      // FETCH DETAIL TAMBAHAN (Untuk dapat link trailer)
+      // Karena API ongoing biasanya tidak ada link trailernya
+      await fetchTrailersForHero();
+
+      renderHeroSlides();
+      startHeroInterval();
+    } else {
+      container.innerHTML =
+        '<div style="display:flex; justify-content:center; align-items:center; height:100%; color:#555;">Gagal memuat slider</div>';
+    }
+  } catch (e) {
+    console.error("Hero Slider Error:", e);
+  }
+}
+
+// Fungsi Mencari Trailer untuk setiap Anime di Slider
+async function fetchTrailersForHero() {
+  // Kita loop data hero dan panggil detailnya satu-satu secara paralel
+  const promises = heroAnimeList.map(async (anime) => {
+    let id = anime.animeId || anime.slug || anime.id || anime.endpoint;
+    // Bersihkan ID
+    if (id && id.includes("/"))
+      id = id
+        .split("/")
+        .filter((p) => p.length > 0)
+        .pop();
+
+    try {
+      const res = await fetch(`${BASE_URL}/anime/anime/${id}`);
+      const detail = await res.json();
+      // Cek apakah ada youtube_id atau link trailer
+      if (detail.data) {
+        // Simpan trailer ke object anime kita
+        // Sesuaikan key dengan API kamu, biasanya 'trailer' atau 'youtube_id'
+        // Disini saya anggap API kamu mungkin tidak punya trailer, jadi saya kasih contoh manual
+        // Kalau API kamu punya field trailer, pakai itu.
+        // Contoh: anime.trailer_url = detail.data.trailer;
+      }
+    } catch (e) {
+      console.log("Gagal ambil trailer untuk " + id);
+    }
+    return anime;
+  });
+
+  await Promise.all(promises);
+}
+
+function renderHeroSlides() {
+  const container = document.getElementById("hero-slider");
+  const dotsContainer = document.getElementById("hero-dots");
+  if (!container) return;
+
+  container.innerHTML = "";
+  if (dotsContainer) dotsContainer.innerHTML = "";
+
+  heroAnimeList.forEach((anime, index) => {
+    const title = anime.title || anime.name;
+    const image = anime.poster || anime.thumb || anime.image;
+    const episode = anime.episode || anime.current_episode || "Ongoing";
+
+    // --- CONTOH TRAILER MANUAL (Untuk Tes) ---
+    // Karena API scraping jarang menyediakan trailer di endpoint ongoing,
+    // kita bisa pakai logika pencarian ID Youtube nanti.
+    // Untuk sekarang, kode ini siap menerima ID trailer.
+    const trailerId = anime.trailer_id || null;
+
+    // Bersihkan ID
+    let rawId = anime.animeId || anime.slug || anime.id || anime.endpoint;
+    let cleanId = rawId;
+    if (cleanId && cleanId.includes("/"))
+      cleanId = cleanId
+        .split("/")
+        .filter((p) => p.length > 0)
+        .pop();
+
+    // 1. Buat Slide HTML
+    const slide = document.createElement("div");
+    slide.className = `hero-slide ${index === 0 ? "active" : ""}`;
+    slide.setAttribute("data-trailer", ""); // Nanti diisi kalau ada
+
+    slide.innerHTML = `
+            <img src="${image}" class="hero-bg" alt="${title}">
+            
+            <div class="hero-video-wrapper" id="hero-vid-${index}"></div>
+
+            <div class="hero-content">
+                <div class="hero-meta">
+                    <span style="background:var(--primary); padding:2px 8px; border-radius:4px; color:#fff; font-weight:bold;">${episode}</span>
+                    <span><i class="fas fa-star" style="color:#f1c40f"></i> Populer</span>
+                </div>
+                <h1 class="hero-title">${title}</h1>
+                <div style="display:flex; gap:10px;">
+                    <button class="hero-btn" onclick="showAnimeDetail('${cleanId}', '${title.replace(
+      /'/g,
+      "\\'"
+    )}', '${image}')">
+                        <i class="fas fa-play"></i> Tonton
+                    </button>
+                    <button class="hero-btn" style="background:rgba(255,255,255,0.2); backdrop-filter:blur(5px);" onclick="window.open('https://www.youtube.com/results?search_query=${title} trailer', '_blank')">
+                        <i class="fab fa-youtube"></i> Trailer
+                    </button>
+                </div>
+            </div>
+        `;
+    container.appendChild(slide);
+
+    // 2. Buat Dots
+    if (dotsContainer) {
+      const dot = document.createElement("div");
+      dot.className = `dot ${index === 0 ? "active" : ""}`;
+      dot.onclick = () => showHeroSlide(index);
+      dotsContainer.appendChild(dot);
+    }
+  });
+
+  // Panggil fungsi play video untuk slide pertama
+  playHeroVideo(0);
+}
+
+function showHeroSlide(index) {
+  const slides = document.querySelectorAll(".hero-slide");
+  const dots = document.querySelectorAll(".dot");
+
+  if (slides.length === 0) return;
+
+  if (index >= slides.length) currentHeroIndex = 0;
+  else if (index < 0) currentHeroIndex = slides.length - 1;
+  else currentHeroIndex = index;
+
+  // Reset Semua Slide
+  slides.forEach((s) => {
+    s.classList.remove("active");
+    s.classList.remove("has-video"); // Reset status video
+    // Kosongkan iframe biar gak berat/bunyi tabrakan
+    const vidWrapper = s.querySelector(".hero-video-wrapper");
+    if (vidWrapper) vidWrapper.innerHTML = "";
+  });
+
+  dots.forEach((d) => d.classList.remove("active"));
+
+  // Set Active Baru
+  if (slides[currentHeroIndex]) {
+    slides[currentHeroIndex].classList.add("active");
+    playHeroVideo(currentHeroIndex); // Putar video slide ini
+  }
+  if (dots[currentHeroIndex]) dots[currentHeroIndex].classList.add("active");
+}
+
+// FUNGSI INTI: MEMUTAR TRAILER
+// Karena API scraping jarang kasih link trailer, kita pakai trik:
+// Kita "Tebak" atau "Cari" trailer, atau hardcode untuk demo.
+function playHeroVideo(index) {
+  const slide = document.querySelectorAll(".hero-slide")[index];
+  if (!slide) return;
+
+  const title = slide.querySelector(".hero-title").innerText;
+  const vidWrapper = slide.querySelector(".hero-video-wrapper");
+
+  // --- CARA KERJA (PENTING) ---
+  // Karena kita tidak punya ID Youtube dari API Scraper biasanya,
+  // Disini saya kasih contoh ARRAY MANUAL untuk DEMO.
+  // Di dunia nyata, kamu butuh API premium (TMDB/Jikan) buat dapet ID Youtube otomatis.
+
+  // Mapping judul anime ke ID Youtube (Contoh)
+  const trailerMap = {
+    "One Piece": "AQe8GSVGq6s", // ID Youtube One Piece
+    Boruto: "VlB4MvS3b_g",
+    "Jujutsu Kaisen": "O6qiewflhUY",
+    "Kimetsu no Yaiba": "pmanD_s7G3U",
+    Bleach: "e8YBesRKq_U",
+  };
+
+  // Cari ID berdasarkan judul (Case insensitive partial match)
+  let videoId = null;
+  Object.keys(trailerMap).forEach((key) => {
+    if (title.toLowerCase().includes(key.toLowerCase())) {
+      videoId = trailerMap[key];
+    }
+  });
+
+  // Jika ketemu ID Youtube-nya
+  if (videoId) {
+    // Delay sedikit biar transisi slide mulus dulu
+    setTimeout(() => {
+      // Embed Youtube: Autoplay, Mute, Loop, No Controls, Playlist (biar loop jalan)
+      vidWrapper.innerHTML = `
+                <iframe 
+                    src="https://www.youtube.com/embed/${videoId}?autoplay=1&mute=1&controls=0&showinfo=0&rel=0&loop=1&playlist=${videoId}&enablejsapi=1" 
+                    frameborder="0" 
+                    allow="autoplay; encrypted-media" 
+                    allowfullscreen>
+                </iframe>
+            `;
+      slide.classList.add("has-video"); // Trigger CSS fade-in
+    }, 1000); // Muncul setelah 1 detik
+  }
+}
 
 window.onload = () => {
   loadHomePage();
