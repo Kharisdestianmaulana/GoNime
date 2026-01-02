@@ -4,13 +4,16 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>GoNime</title>
+    <link rel="icon" href="Go.png" type="image/png" />
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
+
     <link rel="stylesheet" href="style.css" />
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
       rel="stylesheet"
     />
+    <script src="https://cdn.jsdelivr.net/npm/appwrite@13.0.0"></script>
   </head>
   <body>
     <div id="splash-screen">
@@ -28,27 +31,70 @@
         Go<span>Nime</span>
       </div>
 
-      <div class="nav-links desktop-only">
-        <button onclick="showFavorites()" class="nav-btn">
-          <i class="fas fa-heart"></i> Favorit
-        </button>
-        <button onclick="showHistory()" class="nav-btn">
-          <i class="fas fa-history"></i> Riwayat
-        </button>
-        <button onclick="openGenreModal()" class="nav-btn">
-          <i class="fas fa-tags"></i> Genre
-        </button>
-        <button onclick="openScheduleModal()" class="nav-btn">
-          <i class="fas fa-calendar-alt"></i> Jadwal
-        </button>
-        <button onclick="fetchCompletedAnime(1)" class="nav-btn">
-          <i class="fas fa-check-circle"></i> Tamat
-        </button>
-      </div>
+      <div class="nav-right-section">
+        <div class="search-box desktop-search">
+          <input type="text" id="search-input" placeholder="Cari anime..." />
+          <button onclick="searchAnime()"><i class="fas fa-search"></i></button>
+        </div>
 
-      <div class="search-box desktop-search">
-        <input type="text" id="search-input" placeholder="Cari anime..." />
-        <button onclick="searchAnime()"><i class="fas fa-search"></i></button>
+        <div id="auth-buttons" class="auth-btn-group" style="display: flex">
+          <button
+            onclick="loginWithProvider('google')"
+            class="btn-login google"
+            title="Login Google"
+          >
+            <i class="fab fa-google"></i>
+          </button>
+          <button
+            onclick="loginWithProvider('discord')"
+            class="btn-login discord"
+            title="Login Discord"
+          >
+            <i class="fab fa-discord"></i>
+          </button>
+        </div>
+
+        <div
+          id="user-profile-area"
+          class="user-profile-area"
+          style="display: none"
+        >
+          <div class="avatar-wrapper" onclick="toggleUserMenu()">
+            <img id="user-avatar" src="" alt="User" class="nav-avatar" />
+            <span
+              id="header-username"
+              class="desktop-only"
+              style="font-weight: bold; font-size: 0.9rem; margin-left: 8px"
+              >User</span
+            >
+            <i
+              class="fas fa-chevron-down dropdown-arrow"
+              style="margin-left: 5px"
+            ></i>
+          </div>
+
+          <div id="user-dropdown" class="user-dropdown">
+            <div class="dropdown-header">
+              <strong id="user-name-display">Guest</strong>
+              <span>Member Setia</span>
+            </div>
+            <div class="dropdown-body">
+              <a href="#" onclick="showFavorites(); toggleUserMenu()"
+                ><i class="fas fa-heart"></i> Favorit Saya</a
+              >
+              <a href="#" onclick="showHistory(); toggleUserMenu()"
+                ><i class="fas fa-history"></i> Riwayat Nonton</a
+              >
+              <a href="#" onclick="openScheduleModal(); toggleUserMenu()"
+                ><i class="fas fa-calendar-alt"></i> Jadwal Rilis</a
+              >
+              <hr />
+              <a href="#" onclick="logoutUser()" class="logout-link"
+                ><i class="fas fa-sign-out-alt"></i> Keluar</a
+              >
+            </div>
+          </div>
+        </div>
       </div>
 
       <div class="mobile-icons">
@@ -408,4 +454,3 @@
     <script src="script.js"></script>
   </body>
 </html>
-
