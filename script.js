@@ -140,21 +140,42 @@ window.onclick = function (e) {
 
 // Simpan Data ke Cloud
 window.saveToCloud = async (type, jsonData) => {
-  if (!CURRENT_USER_ID) return; // Kalau tamu, gak simpan ke cloud
+  if (!CURRENT_USER_ID) return;
 
   const payload = {};
   payload[type] = JSON.stringify(jsonData);
 
   try {
+    // 1. COBA UPDATE
     await databases.updateDocument(DB_ID, COL_ID, CURRENT_USER_ID, payload);
-    console.log(`Data ${type} tersimpan ke cloud.`);
-  } catch (e) {
-    // Kalau dokumen belum ada, buat baru
-    try {
-      await databases.createDocument(DB_ID, COL_ID, CURRENT_USER_ID, payload);
-      console.log(`Dokumen baru dibuat untuk ${type}.`);
-    } catch (err) {
-      console.error("Gagal simpan ke cloud:", err);
+    console.log(`✅ Sukses update ${type} ke cloud.`);
+  } catch (error) {
+    // 2. CEK KENAPA GAGAL?
+    console.error("❌ Gagal Update karena:", error); // Lihat ini di console nanti!
+
+    // Hanya buat baru jika errornya 404 (Not Found)
+    if (error.code === 404) {
+      console.log("⚠️ Dokumen tidak ditemukan, mencoba membuat baru...");
+      try {
+        const initialPayload = { favorites: "[]", history: "[]" };
+        initialPayload[type] = JSON.stringify(jsonData);
+
+        await databases.createDocument(
+          DB_ID,
+          COL_ID,
+          CURRENT_USER_ID,
+          initialPayload
+        );
+        console.log(`🎉 Dokumen baru berhasil dibuat!`);
+      } catch (createErr) {
+        console.error("Gagal Create:", createErr);
+      }
+    } else {
+      // Kalau errornya bukan 404 (misal 401 Unauthorized), Jangan Create!
+      console.warn(
+        "⛔ Update gagal bukan karena hilang, tapi karena izin/koneksi."
+      );
+      showToast("Gagal simpan: Cek Izin Update di Appwrite", "error");
     }
   }
 };
