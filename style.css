@@ -4355,3 +4355,49 @@ h2 {
   width: 0%;
   transition: width 0.3s;
 }
+
+.greeting-container {
+  margin-bottom: 30px;
+  animation: fadeInGreeting 1s ease-out;
+}
+
+.greeting-container h2 {
+  font-size: 2rem;
+  font-weight: 800;
+  color: white;
+  margin-bottom: 5px;
+  border: none; /* Override border default h2 */
+  padding: 0;
+}
+
+.greeting-container h2 span {
+  color: var(--primary); /* Warna nama user */
+  text-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
+}
+
+.greeting-sub {
+  color: #888;
+  font-size: 1rem;
+  font-weight: 500;
+}
+
+@keyframes fadeInGreeting {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+/* Responsif HP: Kecilin dikit fontnya */
+@media (max-width: 600px) {
+  .greeting-container h2 {
+    font-size: 1.5rem;
+  }
+  .greeting-sub {
+    font-size: 0.85rem;
+  }
+}
