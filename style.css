@@ -4218,3 +4218,140 @@ h2 {
   border-color: var(--primary);
   background: #000;
 }
+.quest-header {
+  background: linear-gradient(135deg, #1e272e 0%, #111 100%);
+  padding: 25px;
+  border-bottom: 1px solid #333;
+  text-align: center;
+}
+
+.quest-header h3 {
+  color: #f1c40f;
+  margin-bottom: 5px;
+  font-size: 1.4rem;
+}
+.quest-header p {
+  color: #888;
+  font-size: 0.9rem;
+  margin-bottom: 15px;
+}
+
+/* XP Bar */
+.user-level-info {
+  background: rgba(255, 255, 255, 0.05);
+  padding: 10px;
+  border-radius: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.xp-bar-bg {
+  width: 100%;
+  height: 8px;
+  background: #333;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.xp-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #f1c40f, #f39c12);
+  transition: width 0.5s ease;
+}
+
+/* List Misi */
+.quest-list {
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  background: #0f0f0f;
+  min-height: 300px;
+}
+
+.quest-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  background: #1a1a1a;
+  padding: 15px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  transition: 0.2s;
+}
+
+.quest-icon {
+  width: 40px;
+  height: 40px;
+  background: rgba(255, 71, 87, 0.1);
+  color: var(--primary);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.2rem;
+  flex-shrink: 0;
+}
+
+.quest-info {
+  flex: 1;
+}
+.quest-title {
+  font-weight: bold;
+  font-size: 0.9rem;
+  color: #fff;
+  margin-bottom: 5px;
+}
+.quest-reward {
+  font-size: 0.75rem;
+  color: #f1c40f;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+/* Tombol Claim */
+.btn-claim {
+  background: #27ae60;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  cursor: pointer;
+  box-shadow: 0 4px 0 #219150; /* Efek tombol timbul */
+  transition: 0.1s;
+}
+
+.btn-claim:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+.btn-claim:disabled {
+  background: #333;
+  color: #555;
+  box-shadow: none;
+  cursor: default;
+  transform: none;
+}
+.btn-claim.completed {
+  background: transparent;
+  color: #27ae60;
+  border: 1px solid #27ae60;
+  box-shadow: none;
+}
+
+/* Progress Bar Mini di tiap misi */
+.quest-progress-bg {
+  width: 100%;
+  height: 4px;
+  background: #333;
+  margin-top: 8px;
+  border-radius: 2px;
+}
+.quest-progress-fill {
+  height: 100%;
+  background: var(--primary);
+  width: 0%;
+  transition: width 0.3s;
+}
