@@ -1,4 +1,4 @@
-const CACHE_NAME = "gonime-v1";
+const CACHE_NAME = "gonime-v1.1.0";
 const urlsToCache = [
   "./",
   "./index.html",
@@ -40,4 +40,3 @@ self.addEventListener("activate", (event) => {
     })
   );
 });
-
