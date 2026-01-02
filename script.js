@@ -1538,6 +1538,7 @@ window.toggleFavorite = function (id, title, image) {
   }
   localStorage.setItem(STORAGE_KEY_FAV, JSON.stringify(favs));
   updateFavoriteBtnUI(id);
+  console.log("Mengirim favorit ke cloud...", favs);
   saveToCloud("favorites", favs);
 };
 function updateFavoriteBtnUI(id) {
