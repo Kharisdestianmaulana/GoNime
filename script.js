@@ -2993,7 +2993,7 @@ function kirimNotifKeDiscord(judulAnime, episode) {
         title: `Update: ${judulAnime}`,
         description: `Episode ${episode} sudah bisa ditonton!`,
         color: 16729943, // Warna Merah (Decimal color)
-        url: "https://gonime.com", // Link website kamu
+        url: "https://kharisdestianmaulana.github.io/GoNime/", // Link website kamu
         image: {
           url: "LINK_GAMBAR_POSTER",
         },
