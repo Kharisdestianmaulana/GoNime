@@ -4071,32 +4071,29 @@ h2 {
   left: 0;
   width: 100%;
   height: 100%;
-  z-index: 0; /* Di atas gambar background, di bawah konten teks */
+  z-index: 0;
   overflow: hidden;
-  opacity: 0; /* Awalnya sembunyi dulu */
+  opacity: 0;
   transition: opacity 1s ease;
-  pointer-events: none; /* PENTING: Agar user tidak bisa klik videonya */
+  pointer-events: none;
 }
 
-/* Trik membesarkan video agar menutupi garis hitam Youtube */
 .hero-video-wrapper iframe {
   position: absolute;
   top: 50%;
   left: 50%;
   width: 100vw;
-  height: 56.25vw; /* Rasio 16:9 */
+  height: 56.25vw;
   min-height: 100vh;
   min-width: 177.77vh;
-  transform: translate(-50%, -50%) scale(1.3); /* Zoom sedikit biar barnya ilang */
-  filter: brightness(0.6); /* Gelapkan video biar teks terbaca */
+  transform: translate(-50%, -50%) scale(1.3);
+  filter: brightness(0.6);
 }
 
-/* Kelas untuk memunculkan video */
 .hero-slide.has-video .hero-video-wrapper {
   opacity: 1;
 }
 
-/* Sembunyikan gambar background kalau video sudah jalan */
 .hero-slide.has-video .hero-bg {
   opacity: 0;
 }
@@ -4111,7 +4108,7 @@ h2 {
   background: #0a0a0a;
   border: 1px solid #333;
   color: #fff;
-  padding: 6px 10px 6px 30px; /* Padding kiri buat ikon */
+  padding: 6px 10px 6px 30px;
   border-radius: 6px;
   width: 100px;
   font-size: 0.85rem;
@@ -4121,11 +4118,10 @@ h2 {
 
 #eps-search-input:focus {
   border-color: var(--primary);
-  width: 120px; /* Melebar saat diketik */
+  width: 120px;
   box-shadow: 0 0 5px rgba(255, 71, 87, 0.3);
 }
 
-/* Ikon kaca pembesar di dalam input */
 .eps-search-wrapper i {
   position: absolute;
   left: 10px;
@@ -4134,7 +4130,6 @@ h2 {
   pointer-events: none;
 }
 
-/* Hilangkan panah spinner di input number */
 #eps-search-input::-webkit-inner-spin-button,
 #eps-search-input::-webkit-outer-spin-button {
   -webkit-appearance: none;
@@ -4145,7 +4140,7 @@ h2 {
   position: relative;
   width: 100px;
   height: 100px;
-  margin: 0 auto 30px auto; /* Tengah */
+  margin: 0 auto 30px auto;
 }
 
 #settings-avatar-preview {
@@ -4205,7 +4200,7 @@ h2 {
 
 .input-with-icon input {
   width: 100%;
-  padding: 12px 15px 12px 40px; /* Padding kiri buat icon */
+  padding: 12px 15px 12px 40px;
   background: #0f0f0f;
   border: 1px solid #333;
   border-radius: 8px;
@@ -4236,7 +4231,6 @@ h2 {
   margin-bottom: 15px;
 }
 
-/* XP Bar */
 .user-level-info {
   background: rgba(255, 255, 255, 0.05);
   padding: 10px;
@@ -4258,7 +4252,6 @@ h2 {
   transition: width 0.5s ease;
 }
 
-/* List Misi */
 .quest-list {
   padding: 20px;
   display: flex;
@@ -4309,7 +4302,6 @@ h2 {
   gap: 5px;
 }
 
-/* Tombol Claim */
 .btn-claim {
   background: #27ae60;
   color: white;
@@ -4319,7 +4311,7 @@ h2 {
   font-size: 0.8rem;
   font-weight: bold;
   cursor: pointer;
-  box-shadow: 0 4px 0 #219150; /* Efek tombol timbul */
+  box-shadow: 0 4px 0 #219150;
   transition: 0.1s;
 }
 
@@ -4341,7 +4333,6 @@ h2 {
   box-shadow: none;
 }
 
-/* Progress Bar Mini di tiap misi */
 .quest-progress-bg {
   width: 100%;
   height: 4px;
@@ -4366,12 +4357,12 @@ h2 {
   font-weight: 800;
   color: white;
   margin-bottom: 5px;
-  border: none; /* Override border default h2 */
+  border: none;
   padding: 0;
 }
 
 .greeting-container h2 span {
-  color: var(--primary); /* Warna nama user */
+  color: var(--primary);
   text-shadow: 0 0 20px rgba(255, 71, 87, 0.3);
 }
 
@@ -4392,12 +4383,150 @@ h2 {
   }
 }
 
-/* Responsif HP: Kecilin dikit fontnya */
 @media (max-width: 600px) {
   .greeting-container h2 {
     font-size: 1.5rem;
   }
   .greeting-sub {
     font-size: 0.85rem;
+  }
+}
+
+.notif-wrapper {
+  display: flex;
+  align-items: center;
+}
+
+.btn-notif {
+  background: transparent;
+  border: none;
+  color: #ccc;
+  font-size: 1.2rem;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s;
+  padding: 5px;
+}
+
+.btn-notif:hover {
+  color: #fff;
+  transform: scale(1.1);
+}
+
+.notif-dot {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 10px;
+  height: 10px;
+  background: #ff4757;
+  border-radius: 50%;
+  border: 2px solid #1e272e;
+  animation: pulseRed 2s infinite;
+}
+
+@keyframes pulseRed {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 71, 87, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(255, 71, 87, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(255, 71, 87, 0);
+  }
+}
+
+.notif-dropdown {
+  position: absolute;
+  top: 50px;
+  right: -60px;
+  width: 300px;
+  background: #1e272e;
+  border: 1px solid #444;
+  border-radius: 12px;
+  box-shadow: 0 10px 40px rgba(0, 0, 0, 0.5);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-10px);
+  transition: all 0.3s ease;
+  z-index: 2001;
+  overflow: hidden;
+}
+
+.notif-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.notif-header {
+  background: #161b22;
+  padding: 12px 15px;
+  border-bottom: 1px solid #333;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.9rem;
+  color: #fff;
+}
+
+.notif-body {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.notif-item {
+  display: flex;
+  gap: 10px;
+  padding: 12px 15px;
+  border-bottom: 1px solid #2f3542;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.notif-item:hover {
+  background: #2f3542;
+}
+
+.notif-img {
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.notif-info {
+  flex: 1;
+}
+
+.notif-title {
+  font-size: 0.85rem;
+  font-weight: bold;
+  color: #fff;
+  margin-bottom: 2px;
+  display: block;
+}
+
+.notif-desc {
+  font-size: 0.75rem;
+  color: var(--primary);
+}
+
+.notif-body::-webkit-scrollbar {
+  width: 5px;
+}
+.notif-body::-webkit-scrollbar-thumb {
+  background: #444;
+  border-radius: 5px;
+}
+
+@media (max-width: 600px) {
+  .notif-dropdown {
+    right: -100px;
+    width: 280px;
   }
 }
