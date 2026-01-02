@@ -95,7 +95,18 @@
               <a href="#" onclick="openScheduleModal(); toggleUserMenu()"
                 ><i class="fas fa-calendar-alt"></i> Jadwal Rilis</a
               >
+              <a href="#" onclick="openGenreModal(); toggleUserMenu()">
+                <i class="fas fa-tags"></i> Daftar Genre
+              </a>
               <hr />
+              <a href="#" onclick="openQuestModal(); toggleUserMenu()">
+                <i class="fas fa-tasks"></i> Misi Harian
+                <span
+                  id="quest-notif"
+                  class="quest-dot"
+                  style="display: none"
+                ></span>
+              </a>
               <a href="#" onclick="openSettingsModal(); toggleUserMenu()"
                 ><i class="fas fa-cog"></i> Pengaturan</a
               >
@@ -511,6 +522,47 @@
                 Simpan Perubahan
               </button>
             </div>
+          </div>
+        </div>
+      </div>
+
+      <div id="quest-modal" class="modal">
+        <div class="modal-content" style="max-width: 450px">
+          <span class="close-btn" onclick="closeQuestModal()">&times;</span>
+
+          <div class="quest-header">
+            <h3><i class="fas fa-tasks"></i> Misi Harian</h3>
+            <p>Selesaikan misi untuk naik pangkat!</p>
+
+            <div class="user-level-info">
+              <div
+                style="
+                  display: flex;
+                  justify-content: space-between;
+                  margin-bottom: 5px;
+                "
+              >
+                <span
+                  id="user-rank-name"
+                  style="font-weight: bold; color: var(--primary)"
+                  >Newbie</span
+                >
+                <span id="user-xp-text" style="color: #aaa; font-size: 0.8rem"
+                  >0 XP</span
+                >
+              </div>
+              <div class="xp-bar-bg">
+                <div
+                  id="user-xp-fill"
+                  class="xp-bar-fill"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+          </div>
+
+          <div id="quest-list" class="quest-list">
+            <p style="text-align: center; padding: 20px">Memuat misi...</p>
           </div>
         </div>
       </div>
