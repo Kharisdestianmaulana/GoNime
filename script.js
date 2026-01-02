@@ -1114,33 +1114,60 @@ async function fetchVideoReal(episodeSlug, fullTitle) {
   modalTitle.innerText = `Putar: ${fullTitle}`;
   setupVideoNav(episodeSlug);
   renderVideoEpisodeBar(episodeSlug);
+
   const wrapper = document.querySelector(".video-wrapper");
   const serverListDiv = document.getElementById("server-list");
+
   wrapper.innerHTML =
-    '<p style="text-align:center; padding-top:20%; color:#ccc;">Mencari server video...</p>';
+    '<div style="display:flex; justify-content:center; align-items:center; height:300px;"><div class="loading"></div><p style="margin-left:10px; color:#fff;">Mencari link video...</p></div>';
+
   if (serverListDiv)
     serverListDiv.innerHTML =
-      '<span style="color:#666;">Loading server...</span>';
+      '<span style="color:#aaa; font-size:0.8rem;">Loading server list...</span>';
+
   if (playerInstance) {
     playerInstance.destroy();
     playerInstance = null;
   }
+
   try {
-    const response = await fetch(`${BASE_URL}/anime/episode/${episodeSlug}`);
+    // Timeout Controller: Batalkan request kalau lebih dari 15 detik
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 15000); // 15 Detik max
+
+    const response = await fetch(`${BASE_URL}/anime/episode/${episodeSlug}`, {
+      signal: controller.signal,
+    });
+
+    clearTimeout(timeoutId); // Hapus timer kalau sukses
+
     const result = await response.json();
     const servers = extractAllServers(result.data);
+
     if (servers.length > 0) {
       if (serverListDiv) renderServerButtons(servers, episodeSlug);
+
+      // Pilih server pertama
       playVideoSource(servers[0].url, episodeSlug);
+
       setTimeout(() => {
         const f = document.querySelector(".server-btn");
         if (f) f.classList.add("active");
       }, 100);
     } else {
-      throw new Error("Tidak ada link server ditemukan.");
+      throw new Error("Server kosong/tidak ditemukan.");
     }
   } catch (e) {
-    wrapper.innerHTML = `<div style="text-align:center; padding:20px; color:#ff4757;">Error: ${e.message}</div>`;
+    let msg = e.message;
+    if (e.name === "AbortError")
+      msg = "Koneksi ke server timeout (terlalu lama).";
+
+    wrapper.innerHTML = `
+        <div style="text-align:center; padding:50px; color:#ff6b81;">
+            <h3><i class="fas fa-exclamation-triangle"></i> Gagal Memuat</h3>
+            <p>${msg}</p>
+            <button onclick="fetchVideoReal('${episodeSlug}', '${fullTitle}')" style="margin-top:10px; padding:5px 15px; cursor:pointer;">Coba Lagi</button>
+        </div>`;
     if (serverListDiv) serverListDiv.innerHTML = "";
   }
 }
@@ -1194,69 +1221,76 @@ function renderVideoEpisodeBar(currentSlug) {
 
 function extractAllServers(data) {
   let foundServers = [];
+
   function deepSearch(obj) {
     if (typeof obj === "string") {
       if (isValidVideoUrl(obj)) foundServers.push({ url: obj });
     } else if (typeof obj === "object" && obj !== null) {
       for (let key in obj) {
+        // Filter kata kunci yang bukan video
         if (
           key.match(
             /poster|thumb|image|cover|subtitle|sub|caption|otakudesuUrl|href|web|page|link_web/i
           )
         )
           continue;
+
         if (isValidVideoUrl(obj[key])) {
           let label = key
             .toUpperCase()
             .replace(/_/g, " ")
             .replace("URL", "")
-            .replace("LINK", "")
-            .replace("EMBED", "")
-            .replace("STREAM", "")
             .trim();
-          if (!label || label.length > 15) label = "SERVER";
-          if (label === "DEFAULT") label = "SERVER UTAMA";
+          if (!label || label.length > 20)
+            label = "SERVER " + (foundServers.length + 1);
           foundServers.push({ name: label, url: obj[key] });
-        } else deepSearch(obj[key]);
+        } else {
+          deepSearch(obj[key]);
+        }
       }
     }
   }
+
   deepSearch(data);
+
+  // Hapus duplikat
   const uniqueServers = [];
   const seenUrls = new Set();
+
   foundServers.forEach((item) => {
     let cleanUrl = item.url.trim();
-    if (
-      cleanUrl.includes("otakudesu.cloud/anime/") ||
-      cleanUrl.includes("otakudesu.cam/anime/")
-    )
-      return;
-    let protocolAgnostic = cleanUrl.replace(/^https?:/, "");
-    if (!seenUrls.has(protocolAgnostic)) {
-      seenUrls.add(protocolAgnostic);
-      if (!item.name || item.name === "SERVER") {
-        if (cleanUrl.includes("drive")) item.name = "GOOGLE DRIVE";
-        else if (cleanUrl.includes("zippyshare")) item.name = "ZIPPY";
-        else if (cleanUrl.includes("mega")) item.name = "MEGA";
-        else if (cleanUrl.includes("mp4upload")) item.name = "MP4UPLOAD";
-        else if (cleanUrl.includes("bstation") || cleanUrl.includes("bilibili"))
-          item.name = "BSTATION";
-        else if (cleanUrl.includes("acefile")) item.name = "ACEFILE";
-        else if (cleanUrl.includes("kd")) item.name = "KD SERVER";
-        else if (cleanUrl.includes(".mp4")) item.name = "HD VIDEO";
-        else item.name = `SERVER ${uniqueServers.length + 1}`;
-      }
+    // Skip link rusak/iklan
+    if (cleanUrl.includes("otakudesu") || cleanUrl.includes("facebook")) return;
+
+    if (!seenUrls.has(cleanUrl)) {
+      seenUrls.add(cleanUrl);
+
+      // Kasih nama yang jelas
+      if (cleanUrl.includes("blogger") || cleanUrl.includes("google"))
+        item.name = "G-DRIVE (Cepat)";
+      else if (cleanUrl.includes("bstation") || cleanUrl.includes("bilibili"))
+        item.name = "BSTATION";
+      else if (cleanUrl.includes("mp4upload")) item.name = "MP4UPLOAD";
+      else if (cleanUrl.includes("streamtape")) item.name = "STREAMTAPE";
+      else if (!item.name.includes("SERVER"))
+        item.name = "SERVER " + (uniqueServers.length + 1);
+
       uniqueServers.push(item);
     }
   });
+
+  // LOGIKA SORTING BARU (Penting!)
+  // Prioritaskan G-Drive & Bstation karena biasanya paling ngebut
   uniqueServers.sort((a, b) => {
-    const getScore = (url) => {
-      if (url.includes(".mp4")) return 3;
-      if (url.includes("drive")) return 2;
+    const getScore = (u) => {
+      if (u.includes("blogger") || u.includes("googleusercontent")) return 10;
+      if (u.includes("bstation") || u.includes("bilibili")) return 9;
+      if (u.includes(".mp4") && !u.includes("mp4upload")) return 5; // MP4 murni
       return 1;
     };
     return getScore(b.url) - getScore(a.url);
   });
+
   return uniqueServers;
 }
 
@@ -1290,14 +1324,33 @@ function renderServerButtons(servers, episodeSlug) {
 // --- PLAYER LOGIC + PROGRESS ---
 function playVideoSource(streamUrl, episodeId) {
   const wrapper = document.querySelector(".video-wrapper");
+
+  // Bersihkan player lama
   if (playerInstance) {
     playerInstance.destroy();
     playerInstance = null;
   }
   wrapper.innerHTML = "";
-  const isMp4 = streamUrl.includes(".mp4");
-  if (isMp4) {
-    wrapper.innerHTML = `<video id="player" playsinline controls autoplay><source src="${streamUrl}" type="video/mp4" /></video>`;
+
+  // 1. CEK APAKAH INI FILE VIDEO MURNI?
+  // Syarat: Harus berakhiran .mp4 ATAU link Google/Blogger (biasanya direct)
+  // DAN BUKAN link embed seperti mp4upload/streamtape
+  const isDirectFile =
+    (streamUrl.includes(".mp4") ||
+      streamUrl.includes("blogger") ||
+      streamUrl.includes("googleusercontent")) &&
+    !streamUrl.includes("mp4upload") &&
+    !streamUrl.includes("streamtape") &&
+    !streamUrl.includes("embed");
+
+  if (isDirectFile) {
+    console.log("Memutar sebagai Direct File (Plyr):", streamUrl);
+
+    wrapper.innerHTML = `
+      <video id="player" playsinline controls autoplay style="width:100%; height:100%;">
+        <source src="${streamUrl}" type="video/mp4" />
+      </video>`;
+
     if (typeof Plyr !== "undefined") {
       playerInstance = new Plyr("#player", {
         controls: [
@@ -1314,49 +1367,53 @@ function playVideoSource(streamUrl, episodeId) {
         autoplay: true,
       });
 
-      playerInstance.on("enterfullscreen", () => {
-        if (screen.orientation && screen.orientation.lock)
-          screen.orientation.lock("landscape").catch(() => {});
-      });
-      playerInstance.on("exitfullscreen", () => {
-        if (screen.orientation && screen.orientation.unlock)
-          screen.orientation.unlock();
-      });
-
-      // RESUME PLAYBACK
+      // Event Listeners (Sama seperti sebelumnya)
       playerInstance.on("ready", () => {
         const lastTime = getVideoProgress(episodeId);
         if (lastTime > 5) {
           playerInstance.currentTime = lastTime;
-          showToast(`Lanjut menonton dari ${formatTime(lastTime)}`, "success");
+          showToast(`Lanjut dari ${formatTime(lastTime)}`, "success");
         }
-        playerInstance.play();
+        playerInstance
+          .play()
+          .catch(() => console.log("Autoplay dicegah browser"));
       });
 
-      // SAVE PROGRESS (Time + Duration)
+      // Save Progress Logic
       let lastSave = 0;
-      playerInstance.on("timeupdate", (event) => {
+      playerInstance.on("timeupdate", () => {
         const now = playerInstance.currentTime;
-        const total = playerInstance.duration; // Ambil durasi
         if (Math.abs(now - lastSave) > 5) {
-          saveVideoProgress(episodeId, now, total);
+          saveVideoProgress(episodeId, now, playerInstance.duration);
           lastSave = now;
         }
       });
 
-      playerInstance.on("pause", () => {
-        saveVideoProgress(
-          episodeId,
-          playerInstance.currentTime,
-          playerInstance.duration
-        );
-      });
-      playerInstance.on("ended", () => {
-        saveVideoProgress(episodeId, 0);
+      // Error handling untuk Plyr
+      playerInstance.on("error", () => {
+        showToast("Gagal memutar video. Coba server lain.", "error");
       });
     }
   } else {
-    wrapper.innerHTML = `<iframe src="${streamUrl}" width="100%" height="100%" frameborder="0" allowfullscreen allow="autoplay; encrypted-media"></iframe>`;
+    // 2. JIKA BUKAN FILE MURNI, GUNAKAN IFRAME (EMBED)
+    console.log("Memutar sebagai Iframe/Embed:", streamUrl);
+
+    // Pastikan URL aman
+    let embedUrl = streamUrl;
+
+    // Khusus Bstation kadang butuh penyesuaian (opsional)
+    // if (embedUrl.includes("bilibili")) { ... }
+
+    wrapper.innerHTML = `
+        <iframe 
+            src="${embedUrl}" 
+            width="100%" 
+            height="100%" 
+            frameborder="0" 
+            allowfullscreen 
+            allow="autoplay; encrypted-media; picture-in-picture"
+            referrerpolicy="no-referrer">
+        </iframe>`;
   }
 }
 
