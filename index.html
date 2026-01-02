@@ -8,6 +8,13 @@
     <link rel="stylesheet" href="https://cdn.plyr.io/3.7.8/plyr.css" />
 
     <link rel="stylesheet" href="style.css" />
+    <link rel="manifest" href="manifest.json" />
+    <meta name="theme-color" content="#ff4757" />
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta
+      name="apple-mobile-web-app-status-bar-style"
+      content="black-translucent"
+    />
     <script src="https://cdn.plyr.io/3.7.8/plyr.polyfilled.js"></script>
     <link
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"
@@ -450,7 +457,16 @@
         </p>
       </div>
     </footer>
-
+    <script>
+      if ("serviceWorker" in navigator) {
+        window.addEventListener("load", () => {
+          navigator.serviceWorker
+            .register("./sw.js")
+            .then((reg) => console.log("Aplikasi Siap: ", reg.scope))
+            .catch((err) => console.log("Gagal install: ", err));
+        });
+      }
+    </script>
     <script src="script.js"></script>
   </body>
 </html>
