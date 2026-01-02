@@ -2982,6 +2982,32 @@ window.markAllRead = () => {
   }
 };
 
+function kirimNotifKeDiscord(judulAnime, episode) {
+  const webhookURL =
+    "https://discord.com/api/webhooks/1456618867248861282/4i4gbvQJCyEsQX9SuJnDrI8DRLNbuZwjnso2tcoriyFk2YOlmAO1WHhX3kQ4HD8fQMbc";
+
+  const payload = {
+    content: "@everyone Episode Baru Rilis! 🚀",
+    embeds: [
+      {
+        title: `Update: ${judulAnime}`,
+        description: `Episode ${episode} sudah bisa ditonton!`,
+        color: 16729943, // Warna Merah (Decimal color)
+        url: "https://gonime.com", // Link website kamu
+        image: {
+          url: "LINK_GAMBAR_POSTER",
+        },
+      },
+    ],
+  };
+
+  fetch(webhookURL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload),
+  });
+}
+
 window.onload = () => {
   loadHomePage();
   initHeroSlider();
