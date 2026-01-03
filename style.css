@@ -4080,26 +4080,6 @@ h2 {
   overflow: visible;
 }
 
-#row-ongoing .anime-card:nth-child(-n + 10)::before {
-  content: counter(anime-rank);
-  position: absolute;
-  bottom: -15px;
-  left: -20px;
-
-  font-size: 7rem;
-  font-weight: 900;
-  font-style: italic;
-  font-family: "Arial Black", sans-serif;
-  line-height: 1;
-  z-index: 2;
-
-  color: var(--darker);
-  -webkit-text-stroke: 2px rgba(255, 255, 255, 0.5);
-  text-shadow: 2px 2px 0px var(--primary);
-
-  pointer-events: none;
-}
-
 #row-ongoing .anime-card:nth-child(-n + 10) {
   margin-left: 35px;
 }
