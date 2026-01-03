@@ -3197,6 +3197,53 @@ function closeViewModal() {
   document.getElementById("view-post-modal").style.display = "none";
 }
 
+function scrollContainer(containerId, direction) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  // Hitung jarak scroll (geser sejauh 70% dari lebar layar)
+  const scrollAmount = container.clientWidth * 0.7;
+
+  container.scrollBy({
+    left: scrollAmount * direction,
+    behavior: "smooth",
+  });
+}
+
+function checkScrollButtons(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const wrapper = container.parentElement;
+  const btnLeft = wrapper.querySelector(".scroll-btn.left");
+  const btnRight = wrapper.querySelector(".scroll-btn.right");
+
+  // Cek Mentok Kiri
+  if (container.scrollLeft <= 10) {
+    btnLeft.classList.add("hidden");
+  } else {
+    btnLeft.classList.remove("hidden");
+  }
+
+  // Cek Mentok Kanan
+  // (scrollLeft + clientWidth) toleransi 10px mendekati scrollWidth
+  if (
+    container.scrollLeft + container.clientWidth >=
+    container.scrollWidth - 10
+  ) {
+    btnRight.classList.add("hidden");
+  } else {
+    btnRight.classList.remove("hidden");
+  }
+}
+
+// Inisialisasi awal (Sembunyikan tombol kiri saat loading)
+window.addEventListener("load", () => {
+  ["row-ongoing", "row-action", "row-romance"].forEach((id) => {
+    checkScrollButtons(id);
+  });
+});
+
 window.onload = () => {
   checkUserSession();
 
