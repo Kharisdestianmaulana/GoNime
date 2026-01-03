@@ -191,10 +191,7 @@
           Memuat Highlight...
         </div>
       </div>
-      <button class="hero-nav prev" onclick="moveHeroSlide(-1)">
-        &#10094;
-      </button>
-      <button class="hero-nav next" onclick="moveHeroSlide(1)">&#10095;</button>
+
       <div class="hero-dots" id="hero-dots"></div>
       <div class="scroll-indicator" onclick="scrollToContent()">
         <i class="fas fa-chevron-down"></i>
@@ -233,13 +230,34 @@
                 Lihat Semua
               </button>
             </div>
-            <div id="row-ongoing" class="horizontal-scroll">
-              <div class="loading-row">Memuat...</div>
+            <div class="scroll-wrapper">
+              <button
+                class="scroll-btn left"
+                onclick="scrollContainer('row-ongoing', -1)"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              <div
+                id="row-ongoing"
+                class="horizontal-scroll"
+                onscroll="checkScrollButtons('row-ongoing')"
+              >
+                <div class="loading-row">Memuat...</div>
+              </div>
+
+              <button
+                class="scroll-btn right"
+                onclick="scrollContainer('row-ongoing', 1)"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
             </div>
           </div>
+
           <div class="category-row">
             <div class="row-header">
-              <h3>⚔️ Anime Action Pilihan</h3>
+              <h3>💥 Anime Action Pilihan</h3>
               <button
                 class="see-all-btn"
                 onclick="fetchAnimeByGenre('action', 'Action', 1)"
@@ -247,10 +265,31 @@
                 Lihat Semua
               </button>
             </div>
-            <div id="row-action" class="horizontal-scroll">
-              <div class="loading-row">Memuat...</div>
+            <div class="scroll-wrapper">
+              <button
+                class="scroll-btn left"
+                onclick="scrollContainer('row-action', -1)"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              <div
+                id="row-action"
+                class="horizontal-scroll"
+                onscroll="checkScrollButtons('row-action')"
+              >
+                <div class="loading-row">Memuat...</div>
+              </div>
+
+              <button
+                class="scroll-btn right"
+                onclick="scrollContainer('row-action', 1)"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
             </div>
           </div>
+
           <div class="category-row">
             <div class="row-header">
               <h3>💖 Romance Terbaik</h3>
@@ -261,8 +300,28 @@
                 Lihat Semua
               </button>
             </div>
-            <div id="row-romance" class="horizontal-scroll">
-              <div class="loading-row">Memuat...</div>
+            <div class="scroll-wrapper">
+              <button
+                class="scroll-btn left"
+                onclick="scrollContainer('row-romance', -1)"
+              >
+                <i class="fas fa-chevron-left"></i>
+              </button>
+
+              <div
+                id="row-romance"
+                class="horizontal-scroll"
+                onscroll="checkScrollButtons('row-romance')"
+              >
+                <div class="loading-row">Memuat...</div>
+              </div>
+
+              <button
+                class="scroll-btn right"
+                onclick="scrollContainer('row-romance', 1)"
+              >
+                <i class="fas fa-chevron-right"></i>
+              </button>
             </div>
           </div>
         </div>
@@ -663,4 +722,3 @@
     <script src="script.js"></script>
   </body>
 </html>
-
